@@ -345,6 +345,7 @@ h1 .w { display: inline-block; animation: rise 0.8s var(--ease) backwards; anima
       <input id="q" type="search" placeholder="Search tasks, parents, people" autocomplete="off"></label>
     <div class="seg" id="statusSeg" role="group" aria-label="Status"><span class="thumb"></span></div>
     <select class="select" id="clientSel" aria-label="Client"></select>
+    <select class="select" id="assigneeSel" aria-label="Assignee"></select>
     <div class="seg" id="sortSeg" role="group" aria-label="Sort"><span class="thumb"></span></div>
   </div>
 
@@ -360,7 +361,10 @@ h1 .w { display: inline-block; animation: rise 0.8s var(--ease) backwards; anima
   var SORTS = [["client", "Client"], ["created", "Newest created"], ["new", "Last moved"]];
   var DAY = 86400000;
   var TABS = [["moved", "Closed or approved"], ["created", "Created"]];
-  var state = { reports: [], date: null, tab: "moved", q: "", status: "all", client: "all", sort: "client", loaded: false, open: {} };
+  var state = { reports: [], date: null, tab: "moved", q: "", status: "all", client: "all", assignee: "all", sort: "client", loaded: false, open: {} };
+  function people(str) { return String(str || "").split(/,\s*/).filter(Boolean); }
+  function hasPerson(x) { return state.assignee === "all" || people(x.assignee).indexOf(state.assignee) > -1; }
+  function isOpen(gp) { return state.open[gp.url] !== undefined ? state.open[gp.url] : state.assignee !== "all"; }
   function listFor(report) { return report ? (state.tab === "created" ? (report.createdGroups || []) : (report.rows || [])) : []; }
   function flat(groups) { var a = []; groups.forEach(function (gp) { a.push(gp); (gp.subtasks || []).forEach(function (x) { a.push(x); }); }); return a; }
   function createdTotal(report) { var t = 0; ((report && report.createdGroups) || []).forEach(function (gp) { t += (gp.isNew ? 1 : 0) + (gp.subtasks || []).length; }); return t; }
@@ -553,7 +557,7 @@ h1 .w { display: inline-block; animation: rise 0.8s var(--ease) backwards; anima
     ["", "Client", "Main task", "Status", "Assignee", "Created"].forEach(function (h) { cols.appendChild(el("span", null, h)); });
     wrap.appendChild(cols);
     list.forEach(function (gp, i) {
-      var open = !!state.open[gp.url];
+      var open = isOpen(gp);
       var grp = el("div", "grp" + (open ? " open" : "")); grp.style.setProperty("--i", i);
       var head = el("div", "gh"); head.tabIndex = 0; head.setAttribute("role", "button"); head.setAttribute("aria-expanded", String(open));
       var subs = gp.subtasks || [];
@@ -584,7 +588,7 @@ h1 .w { display: inline-block; animation: rise 0.8s var(--ease) backwards; anima
         box.appendChild(row);
       });
       inner.appendChild(box); panel.appendChild(inner);
-      var toggle = function () { var on = !state.open[gp.url]; state.open[gp.url] = on; grp.classList.toggle("open", on); head.setAttribute("aria-expanded", String(on)); };
+      var toggle = function () { var on = !isOpen(gp); state.open[gp.url] = on; grp.classList.toggle("open", on); head.setAttribute("aria-expanded", String(on)); };
       head.addEventListener("click", toggle);
       head.addEventListener("keydown", function (e) { if ((e.key === "Enter" || e.key === " ") && e.target === head) { e.preventDefault(); toggle(); } });
       grp.appendChild(head); grp.appendChild(panel); wrap.appendChild(grp);
@@ -597,6 +601,7 @@ h1 .w { display: inline-block; animation: rise 0.8s var(--ease) backwards; anima
     var q = state.q.trim().toLowerCase();
     if (state.tab === "created") {
       var newest = function (gp) { var m = gp.created || 0; (gp.subtasks || []).forEach(function (x) { if ((x.created || 0) > m) m = x.created; }); return m; };
+      if (state.assignee !== "all") rows = rows.map(function (gp) { var subs = (gp.subtasks || []).filter(hasPerson); return (hasPerson(gp) || subs.length) ? Object.assign({}, gp, { subtasks: subs }) : null; }).filter(Boolean);
       rows = rows.filter(function (gp) {
         var items = [gp].concat(gp.subtasks || []);
         if (state.client !== "all" && gp.client !== state.client) return false;
@@ -610,6 +615,7 @@ h1 .w { display: inline-block; animation: rise 0.8s var(--ease) backwards; anima
     rows = rows.filter(function (r) {
       if (state.status !== "all") { var k = kind(r.status); if (state.status === "other" ? (k === "closed" || k === "approval") : k !== state.status) return false; }
       if (state.client !== "all" && r.client !== state.client) return false;
+      if (!hasPerson(r)) return false;
       if (q) { var hay = [r.client, r.task, r.parent, r.assignee, r.creator, r.closedBy, r.status].join(" ").toLowerCase(); if (hay.indexOf(q) < 0) return false; }
       return true;
     });
@@ -636,6 +642,12 @@ h1 .w { display: inline-block; animation: rise 0.8s var(--ease) backwards; anima
     var o0 = el("option", null, "All clients"); o0.value = "all"; sel.appendChild(o0);
     list.forEach(function (n) { var o = el("option", null, n); o.value = n; sel.appendChild(o); });
     sel.value = list.indexOf(state.client) > -1 ? state.client : "all"; state.client = sel.value;
+    var asel = $("assigneeSel"), who = {}; all.forEach(function (r) { people(r.assignee).forEach(function (n) { who[n] = 1; }); });
+    var wl = Object.keys(who).sort();
+    asel.textContent = "";
+    var a0 = el("option", null, "All assignees"); a0.value = "all"; asel.appendChild(a0);
+    wl.forEach(function (n) { var o = el("option", null, n); o.value = n; asel.appendChild(o); });
+    asel.value = wl.indexOf(state.assignee) > -1 ? state.assignee : "all"; state.assignee = asel.value;
     renderTable(filtered(report));
   }
 
@@ -671,6 +683,7 @@ h1 .w { display: inline-block; animation: rise 0.8s var(--ease) backwards; anima
 
   $("q").addEventListener("input", function (e) { state.q = e.target.value; renderBody(); });
   $("clientSel").addEventListener("change", function (e) { state.client = e.target.value; renderBody(); });
+  $("assigneeSel").addEventListener("change", function (e) { state.assignee = e.target.value; renderBody(); });
   window.addEventListener("resize", function () { placeThumb($("tabSeg")); placeThumb($("statusSeg")); placeThumb($("sortSeg")); });
 
   /* Pointer motion: tilt, spotlight, magnetism, aurora, scroll */
