@@ -109,7 +109,7 @@ button, select, input { font: inherit; color: inherit; }
 @keyframes ping { 0% { transform: scale(1); opacity: 0.6; } 80%, 100% { transform: scale(3); opacity: 0; } }
 
 /* Hero */
-.hero { padding-block: 40px 8px; animation: rise 0.7s var(--ease) both; }
+.hero { position: relative; padding-block: 40px 8px; will-change: transform, opacity; }
 .eyebrow { font-size: 13px; font-weight: 600; color: var(--accent); letter-spacing: 0.01em; }
 h1 { margin: 6px 0 0; font-size: clamp(34px, 6vw, 56px); line-height: 1.05; letter-spacing: -0.035em; font-weight: 700; text-wrap: balance; }
 .sub { margin: 12px 0 0; font-size: clamp(16px, 2vw, 19px); color: var(--fg-2); max-width: 60ch; text-wrap: pretty; }
@@ -122,10 +122,11 @@ h1 { margin: 6px 0 0; font-size: clamp(34px, 6vw, 56px); line-height: 1.05; lett
   flex: 0 0 auto; border: 0; cursor: pointer; background: var(--surface); color: var(--fg);
   padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 500;
   box-shadow: inset 0 0 0 1px var(--line);
-  transition: transform 0.35s var(--ease), background 0.25s, color 0.25s, box-shadow 0.25s;
+  transform: translate(var(--mx, 0px), var(--my, 0px)) scale(var(--s, 1));
+  transition: transform 0.4s var(--ease), background 0.25s, color 0.25s, box-shadow 0.25s;
 }
-.day:hover { transform: translateY(-1px); }
-.day:active { transform: scale(0.96); }
+.day:hover { --s: 1.05; }
+.day:active { --s: 0.95; }
 .day[aria-pressed="true"] { background: var(--fg); color: var(--bg); box-shadow: none; }
 .day small { color: var(--fg-3); font-weight: 500; margin-left: 6px; font-variant-numeric: tabular-nums; }
 .day[aria-pressed="true"] small { color: inherit; opacity: 0.6; }
@@ -134,10 +135,14 @@ h1 { margin: 6px 0 0; font-size: clamp(34px, 6vw, 56px); line-height: 1.05; lett
 .tiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-top: 20px; }
 .tile {
   background: var(--surface); border-radius: 20px; padding: 18px 18px 16px; box-shadow: var(--shadow);
-  animation: rise 0.7s var(--ease) both; animation-delay: calc(var(--i) * 70ms + 120ms);
-  transition: transform 0.45s var(--ease);
+  position: relative; overflow: hidden; isolation: isolate;
+  animation: rise 0.7s var(--ease) backwards; animation-delay: calc(var(--i) * 70ms + 120ms);
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) scale(var(--s, 1));
+  transition: transform 0.6s var(--ease), box-shadow 0.4s;
 }
-.tile:hover { transform: translateY(-3px); }
+.tile.hot { transition: transform 0.12s linear, box-shadow 0.4s; --s: 1.02; box-shadow: 0 2px 4px rgba(0,0,0,.06), 0 18px 40px rgba(0,0,0,.14); }
+.tile::before { content: ""; position: absolute; inset: 0; z-index: -1; opacity: 0; transition: opacity 0.4s; background: radial-gradient(260px circle at var(--px, 50%) var(--py, 50%), var(--accent-soft), transparent 70%); }
+.tile.hot::before { opacity: 1; }
 .tile .k { font-size: 12px; font-weight: 600; color: var(--fg-2); letter-spacing: 0.02em; text-transform: uppercase; }
 .tile .v { margin-top: 8px; font-size: clamp(32px, 4vw, 44px); font-weight: 700; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
 .tile .d { margin-top: 8px; font-size: 12px; color: var(--fg-3); }
@@ -156,7 +161,7 @@ h1 { margin: 6px 0 0; font-size: clamp(34px, 6vw, 56px); line-height: 1.05; lett
 .seg { position: relative; display: inline-flex; background: var(--mute-soft); border-radius: 11px; padding: 3px; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
 .seg::-webkit-scrollbar { display: none; }
 .seg .thumb { position: absolute; top: 3px; bottom: 3px; left: 0; width: 0; border-radius: 8px; background: var(--surface); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.16); transition: transform 0.45s var(--ease), width 0.45s var(--ease); }
-.seg button { position: relative; z-index: 1; border: 0; background: none; cursor: pointer; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; color: var(--fg-2); white-space: nowrap; transition: color 0.25s; }
+.seg button { transform: translate(var(--mx, 0px), var(--my, 0px)); position: relative; z-index: 1; border: 0; background: none; cursor: pointer; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; color: var(--fg-2); white-space: nowrap; transition: color 0.25s, transform 0.4s var(--ease); }
 .seg button[aria-pressed="true"] { color: var(--fg); }
 .seg button i { font-style: normal; color: var(--fg-3); margin-left: 4px; font-variant-numeric: tabular-nums; }
 .select { border: 0; cursor: pointer; background: var(--surface); border-radius: 12px; padding: 9px 12px; box-shadow: inset 0 0 0 1px var(--line); max-width: 100%; }
@@ -167,8 +172,10 @@ h1 { margin: 6px 0 0; font-size: clamp(34px, 6vw, 56px); line-height: 1.05; lett
 table { width: 100%; border-collapse: collapse; min-width: 1360px; }
 th { text-align: left; font-size: 12px; font-weight: 600; color: var(--fg-3); letter-spacing: 0.02em; text-transform: uppercase; padding: 14px 16px; background: var(--surface-2); border-bottom: 1px solid var(--line); white-space: nowrap; }
 td { padding: 14px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
-tbody tr { animation: rise 0.5s var(--ease) both; animation-delay: calc(min(var(--i), 14) * 28ms); transition: background 0.25s; }
-tbody tr:hover { background: var(--accent-soft); }
+tbody tr { animation: rise 0.5s var(--ease) backwards; animation-delay: calc(min(var(--i), 14) * 28ms); transition: background 0.25s; }
+tbody tr:hover { background: radial-gradient(420px circle at var(--px, 50%) var(--py, 50%), var(--accent-soft), transparent 75%); }
+tbody tr .task a { display: inline-block; transition: transform 0.4s var(--ease); }
+tbody tr:hover .task a { transform: translateX(4px); }
 tbody tr:last-child td { border-bottom: 0; }
 .client { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; white-space: nowrap; }
 .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
@@ -185,7 +192,7 @@ tbody tr:last-child td { border-bottom: 0; }
 .tools { margin-top: 14px; }
 .seg.lg button { padding: 8px 18px; font-size: 14px; }
 .tile.pick { cursor: pointer; }
-.tile.pick:active { transform: scale(0.98); }
+.tile.pick:active { --s: 0.98; }
 .tile.on { box-shadow: 0 0 0 2px var(--accent), var(--shadow); }
 .tile.info .v { color: var(--info); }
 .new { display: inline-block; margin-left: 8px; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; padding: 2px 7px; border-radius: 999px; background: var(--accent); color: #fff; vertical-align: 1px; animation: pop 0.6s var(--ease) both; }
@@ -207,6 +214,69 @@ tbody tr:last-child td { border-bottom: 0; }
 /* Skeleton */
 .sk { height: 14px; border-radius: 7px; background: linear-gradient(90deg, var(--mute-soft) 25%, var(--line) 50%, var(--mute-soft) 75%); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; }
 @keyframes shimmer { to { background-position: -200% 0; } }
+
+
+/* Created groups */
+.groups { display: block; }
+.gcols, .gh { display: grid; grid-template-columns: 36px 160px minmax(260px, 1fr) 140px 160px 150px 150px; gap: 12px; align-items: start; padding: 14px 16px; }
+.gcols { background: var(--surface-2); border-bottom: 1px solid var(--line); font-size: 12px; font-weight: 600; color: var(--fg-3); letter-spacing: 0.02em; text-transform: uppercase; align-items: center; }
+.grp { border-bottom: 1px solid var(--line); animation: rise 0.5s var(--ease) backwards; animation-delay: calc(min(var(--i), 10) * 40ms); }
+.grp:last-child { border-bottom: 0; }
+.gh { cursor: pointer; transition: background 0.25s; outline-offset: -2px; }
+.gh:hover { background: radial-gradient(420px circle at var(--px, 50%) var(--py, 50%), var(--accent-soft), transparent 75%); }
+.chev { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--mute-soft); color: var(--fg-2); transition: transform 0.5s var(--ease), background 0.3s, color 0.3s; }
+.chev svg { width: 14px; height: 14px; }
+.gh:hover .chev { background: var(--accent-soft); color: var(--accent); }
+.grp.open .chev { transform: rotate(90deg); background: var(--accent); color: #fff; }
+.gh .task { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; }
+.gh .task a, .srow .task a { overflow-wrap: anywhere; }
+.chip { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--mute-soft); color: var(--mute); }
+.new.inline { margin-left: 0; }
+.count { flex-basis: 100%; font-size: 12px; color: var(--fg-3); }
+.gp { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.55s var(--ease); }
+.gp > div { overflow: hidden; min-height: 0; }
+.grp.open .gp { grid-template-rows: 1fr; }
+.subs { margin: 0 16px 16px 52px; border-radius: 16px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); overflow-x: auto; opacity: 0; transform: translateY(-8px); transition: opacity 0.4s, transform 0.55s var(--ease); }
+.grp.open .subs { opacity: 1; transform: none; }
+.srow { display: grid; grid-template-columns: minmax(240px, 1fr) 130px 160px 150px 130px; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--line); align-items: start; min-width: 760px; }
+.srow:first-child { border-top: 0; }
+.srow.shead { font-size: 11px; font-weight: 600; color: var(--fg-3); letter-spacing: 0.03em; text-transform: uppercase; padding-block: 10px; }
+.grp.open .srow:not(.shead) { animation: rise 0.45s var(--ease) backwards; animation-delay: calc(var(--k) * 45ms + 120ms); }
+.via { display: block; font-size: 12px; color: var(--fg-3); margin-top: 2px; }
+.due { display: block; font-size: 13px; color: var(--fg-2); font-variant-numeric: tabular-nums; }
+.due b { display: block; font-weight: 500; color: var(--fg); }
+.due em { font-style: normal; font-size: 12px; color: var(--fg-3); }
+.due em.late { color: #ff453a; font-weight: 600; }
+.due.dim { color: var(--fg-3); }
+@media (max-width: 1100px) { .groups { overflow-x: auto; } .gcols, .gh { min-width: 1000px; } }
+@media (max-width: 720px) {
+  .groups { overflow: visible; }
+  .gcols { display: none; }
+  .gh { min-width: 0; grid-template-columns: 36px 1fr; gap: 6px 10px; }
+  .gh > :nth-child(n+2) { grid-column: 2; }
+  .subs { margin-left: 16px; }
+  .srow { min-width: 0; grid-template-columns: 1fr 1fr; }
+  .srow.shead { display: none; }
+  .srow .task { grid-column: 1 / -1; }
+  .srow > [data-l]::before { content: attr(data-l); display: block; font-size: 10px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--fg-3); }
+}
+
+/* Pointer motion */
+.field { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 0.6s; background: radial-gradient(520px circle at var(--cx, 50%) var(--cy, 30%), var(--accent-soft), transparent 65%); }
+.fine .field { opacity: 1; }
+.wrap, .bar { position: relative; z-index: 1; }
+.bar { position: sticky; z-index: 10; transition: box-shadow 0.4s, background 0.4s; }
+.bar.scrolled { box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08); }
+.aurora { position: absolute; inset: -40px -10% auto -10%; height: 340px; z-index: -1; pointer-events: none; filter: blur(70px); opacity: 0.55; }
+.aurora i { position: absolute; border-radius: 50%; translate: calc(var(--ax, 0) * var(--d, 30px)) calc(var(--ay, 0) * var(--d, 30px)); transition: translate 0.9s var(--ease); animation: drift 14s ease-in-out infinite alternate; }
+.aurora i:nth-child(1) { width: 340px; height: 260px; left: 8%; top: 10px; background: var(--accent); --d: 46px; opacity: 0.5; }
+.aurora i:nth-child(2) { width: 300px; height: 240px; left: 44%; top: 50px; background: var(--info); --d: -38px; animation-duration: 18s; opacity: 0.45; }
+.aurora i:nth-child(3) { width: 260px; height: 220px; left: 70%; top: 0; background: var(--good); --d: 26px; animation-duration: 22s; opacity: 0.32; }
+@keyframes drift { from { transform: translate(0, 0) scale(1); } to { transform: translate(36px, 24px) scale(1.12); } }
+h1 .w { display: inline-block; animation: rise 0.8s var(--ease) backwards; animation-delay: calc(var(--k) * 70ms + 80ms); }
+.eyebrow, .sub { animation: rise 0.8s var(--ease) backwards; }
+.sub { animation-delay: 0.45s; }
+@media (prefers-reduced-motion: reduce) { .aurora i { animation: none; } .field { display: none; } }
 
 @media (max-width: 880px) {
   .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -230,15 +300,17 @@ tbody tr:last-child td { border-bottom: 0; }
 }
 </style>
 
-<div class="bar"><div class="bar-in">
+<div class="field" aria-hidden="true"></div>
+<div class="bar" id="bar"><div class="bar-in">
   <span class="bar-title">Task Movement</span>
   <span class="live"><span class="pulse"></span><span id="liveTxt">Updates daily at 8:30 AM ET</span></span>
 </div></div>
 
 <div class="wrap">
-  <header class="hero">
+  <header class="hero" id="hero">
+    <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
     <div class="eyebrow" id="eyebrow">ClickUp · Client View</div>
-    <h1>What moved in the last 24 hours</h1>
+    <h1 id="h1">What moved in the last 24 hours</h1>
     <p class="sub" id="sub">Tasks closed or sent for approval across every client, refreshed each morning.</p>
   </header>
 
@@ -268,8 +340,10 @@ tbody tr:last-child td { border-bottom: 0; }
   var SORTS = [["client", "Client"], ["created", "Newest created"], ["new", "Last moved"]];
   var DAY = 86400000;
   var TABS = [["moved", "Closed or approved"], ["created", "Created"]];
-  var state = { reports: [], date: null, tab: "moved", q: "", status: "all", client: "all", sort: "client", loaded: false };
-  function listFor(report) { return report ? (state.tab === "created" ? (report.createdRows || []) : (report.rows || [])) : []; }
+  var state = { reports: [], date: null, tab: "moved", q: "", status: "all", client: "all", sort: "client", loaded: false, open: {} };
+  function listFor(report) { return report ? (state.tab === "created" ? (report.createdGroups || []) : (report.rows || [])) : []; }
+  function flat(groups) { var a = []; groups.forEach(function (gp) { a.push(gp); (gp.subtasks || []).forEach(function (x) { a.push(x); }); }); return a; }
+  function createdTotal(report) { var t = 0; ((report && report.createdGroups) || []).forEach(function (gp) { t += (gp.isNew ? 1 : 0) + (gp.subtasks || []).length; }); return t; }
   var $ = function (id) { return document.getElementById(id); };
   var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -348,16 +422,16 @@ tbody tr:last-child td { border-bottom: 0; }
 
   function renderTiles(report) {
     var host = $("tiles");
-    var rows = report.rows || [], made = report.createdRows || [];
+    var rows = report.rows || [], groups = report.createdGroups || [];
     var closed = rows.filter(function (r) { return kind(r.status) === "closed"; }).length;
     var appr = rows.filter(function (r) { return kind(r.status) === "approval"; }).length;
-    var clients = {}; rows.concat(made).forEach(function (r) { clients[r.client] = 1; });
-    var main = made.filter(function (r) { return r.type === "Main"; }).length;
+    var clients = {}; rows.concat(groups).forEach(function (r) { clients[r.client] = 1; });
+    var made = createdTotal(report), newMain = groups.filter(function (gp) { return gp.isNew; }).length;
     var data = [
       ["Moved", rows.length, "", "Closed or sent for approval", "moved"],
       ["Closed", closed, "good", "Finished and archived", "moved"],
       ["Done - Approval", appr, "warn", "Waiting on countercheck", "moved"],
-      ["Created", made.length, "info", main + " main · " + (made.length - main) + " subtasks", "created"],
+      ["Created", made, "info", newMain + " new main · " + groups.length + " mains touched", "created"],
       ["Clients", Object.keys(clients).length, "", "With activity", null]
     ];
     host.textContent = "";
@@ -399,9 +473,10 @@ tbody tr:last-child td { border-bottom: 0; }
       e2.appendChild(el("p", null, none ? "Reports from the daily refresh list every task created or moved in the 24 hours before 8:30 AM ET." : "Try a different status, client or search."));
       host.appendChild(e2); return;
     }
+    if (state.tab === "created") { renderGroups(rows, host); return; }
     var table = el("table");
     var head = el("thead"), hr = el("tr");
-    var made = state.tab === "created";
+    var made = false;
     (made
       ? ["Client", "Type", "Parent task", "Task", "Created", "Created by", "Assignee", "Status"]
       : ["Client", "Type", "Parent task", "Task", "Created", "Created by", "Assignee", "Status", "Closed / moved by", "Closed / updated"]
@@ -441,9 +516,82 @@ tbody tr:last-child td { border-bottom: 0; }
     table.appendChild(body); host.appendChild(table);
   }
 
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function chevron() {
+    var svg = document.createElementNS(SVGNS, "svg"); svg.setAttribute("viewBox", "0 0 20 20"); svg.setAttribute("aria-hidden", "true");
+    var p = document.createElementNS(SVGNS, "path"); p.setAttribute("d", "m7 4 6 6-6 6"); p.setAttribute("fill", "none"); p.setAttribute("stroke", "currentColor"); p.setAttribute("stroke-width", "2"); p.setAttribute("stroke-linecap", "round"); p.setAttribute("stroke-linejoin", "round");
+    svg.appendChild(p); return svg;
+  }
+  function dueCell(due, ref) {
+    var c = el("span", "due");
+    if (!due) { c.textContent = "No due date"; c.classList.add("dim"); return c; }
+    c.appendChild(el("b", null, dayLabel(due)));
+    var key = function (t) { var q = fmt(t, { year: "numeric", month: "2-digit", day: "2-digit" }).split("/"); return Date.UTC(+q[2], +q[0] - 1, +q[1]); };
+    var d = Math.round((key(due) - key(ref)) / DAY);
+    var t = d < 0 ? "Overdue" : d === 0 ? "Due today" : d === 1 ? "Due tomorrow" : "In " + d + " days";
+    var sm = el("em", d < 0 ? "late" : null, t); c.appendChild(sm); return c;
+  }
+  function renderGroups(list, host) {
+    var report = current(), ref = (report && (report.windowEnd || report.generatedAt)) || Date.now();
+    var wrap = el("div", "groups");
+    var cols = el("div", "gcols");
+    ["", "Client", "Main task", "Status", "Assignee", "Created", "Created by"].forEach(function (h) { cols.appendChild(el("span", null, h)); });
+    wrap.appendChild(cols);
+    list.forEach(function (gp, i) {
+      var open = !!state.open[gp.url];
+      var grp = el("div", "grp" + (open ? " open" : "")); grp.style.setProperty("--i", i);
+      var head = el("div", "gh"); head.tabIndex = 0; head.setAttribute("role", "button"); head.setAttribute("aria-expanded", String(open));
+      var subs = gp.subtasks || [];
+      var chev = el("span", "chev"); chev.appendChild(chevron()); head.appendChild(chev);
+      var c1 = el("span", "client"); var dot = el("span", "dot"); dot.style.background = colorFor(gp.client || "?"); c1.appendChild(dot); c1.appendChild(document.createTextNode(gp.client || "Unassigned client")); head.appendChild(c1);
+      var c2 = el("span", "task"); var a = el("a", null, gp.task); if (gp.url) { a.href = gp.url; a.target = "_blank"; a.rel = "noopener noreferrer"; a.addEventListener("click", function (ev) { ev.stopPropagation(); }); }
+      c2.appendChild(a);
+      c2.appendChild(el("span", gp.isNew ? "new inline" : "chip", gp.isNew ? "NEW" : "Existing task"));
+      c2.appendChild(el("span", "count", subs.length + (subs.length === 1 ? " new subtask" : " new subtasks")));
+      head.appendChild(c2);
+      var c3 = el("span"); c3.appendChild(el("span", "pill " + kind(gp.status), pretty(gp.status))); head.appendChild(c3);
+      head.appendChild(el("span", "who", gp.assignee || "Unassigned"));
+      var c5 = el("span", "when");
+      if (gp.created) { c5.appendChild(el("b", null, dayLabel(gp.created))); c5.appendChild(document.createTextNode(gp.isNew ? timeLabel(gp.created) : "Task created earlier")); } else c5.textContent = "Not recorded";
+      head.appendChild(c5);
+      head.appendChild(el("span", "who", gp.creator || "Not recorded"));
+      var panel = el("div", "gp"); var inner = el("div"); var box = el("div", "subs");
+      var sh = el("div", "srow shead"); ["Subtask", "Status", "Assignee", "Due date", "Created"].forEach(function (h) { sh.appendChild(el("span", null, h)); }); box.appendChild(sh);
+      subs.slice().sort(function (x, y) { return (y.created || 0) - (x.created || 0); }).forEach(function (x, k) {
+        var row = el("div", "srow"); row.style.setProperty("--k", k);
+        var n = el("span", "task"); var l = el("a", null, x.task); if (x.url) { l.href = x.url; l.target = "_blank"; l.rel = "noopener noreferrer"; } n.appendChild(l);
+        if (x.via) n.appendChild(el("span", "via", "in " + x.via));
+        row.appendChild(n);
+        var st = el("span"); st.setAttribute("data-l", "Status"); st.appendChild(el("span", "pill " + kind(x.status), pretty(x.status))); row.appendChild(st);
+        var as = el("span", "who", x.assignee || "Unassigned"); as.setAttribute("data-l", "Assignee"); row.appendChild(as);
+        var du = dueCell(x.due, ref); du.setAttribute("data-l", "Due date"); row.appendChild(du);
+        var cr = el("span", "when"); cr.setAttribute("data-l", "Created"); if (x.created) { cr.appendChild(el("b", null, dayLabel(x.created))); cr.appendChild(document.createTextNode(timeLabel(x.created))); } row.appendChild(cr);
+        box.appendChild(row);
+      });
+      inner.appendChild(box); panel.appendChild(inner);
+      var toggle = function () { var on = !state.open[gp.url]; state.open[gp.url] = on; grp.classList.toggle("open", on); head.setAttribute("aria-expanded", String(on)); };
+      head.addEventListener("click", toggle);
+      head.addEventListener("keydown", function (e) { if ((e.key === "Enter" || e.key === " ") && e.target === head) { e.preventDefault(); toggle(); } });
+      grp.appendChild(head); grp.appendChild(panel); wrap.appendChild(grp);
+    });
+    host.appendChild(wrap);
+  }
+
   function filtered(report) {
     var rows = listFor(report).slice();
     var q = state.q.trim().toLowerCase();
+    if (state.tab === "created") {
+      var newest = function (gp) { var m = gp.created || 0; (gp.subtasks || []).forEach(function (x) { if ((x.created || 0) > m) m = x.created; }); return m; };
+      rows = rows.filter(function (gp) {
+        var items = [gp].concat(gp.subtasks || []);
+        if (state.client !== "all" && gp.client !== state.client) return false;
+        if (state.status !== "all" && !items.some(function (r) { var k = kind(r.status); return state.status === "other" ? (k !== "closed" && k !== "approval") : k === state.status; })) return false;
+        if (q) { var hay = gp.client + " " + items.map(function (r) { return [r.task, r.assignee, r.creator, r.status].join(" "); }).join(" "); if (hay.toLowerCase().indexOf(q) < 0) return false; }
+        return true;
+      });
+      rows.sort(function (a, b) { if (state.sort === "client") { var c = String(a.client).localeCompare(String(b.client)); if (c) return c; } return newest(b) - newest(a); });
+      return rows;
+    }
     rows = rows.filter(function (r) {
       if (state.status !== "all") { var k = kind(r.status); if (state.status === "other" ? (k === "closed" || k === "approval") : k !== state.status) return false; }
       if (state.client !== "all" && r.client !== state.client) return false;
@@ -460,14 +608,14 @@ tbody tr:last-child td { border-bottom: 0; }
 
   function renderBody() {
     var report = current();
-    var all = listFor(report);
+    var all = state.tab === "created" ? flat(listFor(report)) : listFor(report);
     var counts = { all: all.length, closed: 0, approval: 0, other: 0 };
     all.forEach(function (r) { counts[kind(r.status) === "launch" ? "other" : kind(r.status)]++; });
-    var tabCounts = { moved: ((report && report.rows) || []).length, created: ((report && report.createdRows) || []).length };
+    var tabCounts = { moved: ((report && report.rows) || []).length, created: createdTotal(report) };
     buildSeg($("tabSeg"), TABS, "tab", tabCounts);
     buildSeg($("statusSeg"), STATUS_FILTERS, "status", counts);
     buildSeg($("sortSeg"), SORTS, "sort");
-    var sel = $("clientSel"); var names = {}; all.forEach(function (r) { names[r.client] = 1; });
+    var sel = $("clientSel"); var names = {}; all.forEach(function (r) { if (r.client) names[r.client] = 1; });
     var list = Object.keys(names).sort();
     sel.textContent = "";
     var o0 = el("option", null, "All clients"); o0.value = "all"; sel.appendChild(o0);
@@ -493,6 +641,49 @@ tbody tr:last-child td { border-bottom: 0; }
   $("q").addEventListener("input", function (e) { state.q = e.target.value; renderBody(); });
   $("clientSel").addEventListener("change", function (e) { state.client = e.target.value; renderBody(); });
   window.addEventListener("resize", function () { placeThumb($("tabSeg")); placeThumb($("statusSeg")); placeThumb($("sortSeg")); });
+
+  /* Pointer motion: tilt, spotlight, magnetism, aurora, scroll */
+  (function () {
+    var root = document.documentElement, hero = $("hero"), bar = $("bar");
+    var words = $("h1").textContent.split(" ");
+    $("h1").textContent = "";
+    words.forEach(function (w, k) { var sp = el("span", "w", w); sp.style.setProperty("--k", k); $("h1").appendChild(sp); if (k < words.length - 1) $("h1").appendChild(document.createTextNode(" ")); });
+    var fine = window.matchMedia && matchMedia("(hover: hover) and (pointer: fine)").matches && !reduce;
+    function onScroll() {
+      var y = window.scrollY || 0;
+      bar.classList.toggle("scrolled", y > 8);
+      if (!reduce) { var p = Math.min(1, y / 320); hero.style.opacity = String(1 - p * 0.7); hero.style.transform = "translateY(" + (-p * 28) + "px) scale(" + (1 - p * 0.04) + ")"; }
+    }
+    window.addEventListener("scroll", onScroll, { passive: true }); onScroll();
+    if (!fine) return;
+    root.classList.add("fine");
+    var tx = 0, ty = 0, cx = 0, cy = 0, run = false;
+    function loop() {
+      cx += (tx - cx) * 0.14; cy += (ty - cy) * 0.14;
+      root.style.setProperty("--cx", cx.toFixed(1) + "px"); root.style.setProperty("--cy", cy.toFixed(1) + "px");
+      if (Math.abs(tx - cx) > 0.4 || Math.abs(ty - cy) > 0.4) requestAnimationFrame(loop); else run = false;
+    }
+    function reset(t) { t.style.removeProperty("--rx"); t.style.removeProperty("--ry"); t.style.removeProperty("--mx"); t.style.removeProperty("--my"); t.classList.remove("hot"); }
+    document.addEventListener("pointermove", function (e) {
+      tx = e.clientX; ty = e.clientY; if (!run) { run = true; requestAnimationFrame(loop); }
+      root.style.setProperty("--ax", ((e.clientX / innerWidth) * 2 - 1).toFixed(3)); root.style.setProperty("--ay", ((e.clientY / innerHeight) * 2 - 1).toFixed(3));
+      var t = e.target.closest ? e.target.closest(".tile") : null;
+      if (t) {
+        var r = t.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+        t.style.setProperty("--px", x + "px"); t.style.setProperty("--py", y + "px");
+        t.style.setProperty("--rx", ((0.5 - y / r.height) * 9).toFixed(2) + "deg"); t.style.setProperty("--ry", ((x / r.width - 0.5) * 11).toFixed(2) + "deg");
+        t.classList.add("hot");
+      }
+      var tr = e.target.closest ? e.target.closest("tbody tr, .gh") : null;
+      if (tr) { var rr = tr.getBoundingClientRect(); tr.style.setProperty("--px", (e.clientX - rr.left) + "px"); tr.style.setProperty("--py", (e.clientY - rr.top) + "px"); }
+      var m = e.target.closest ? e.target.closest(".day, .seg button") : null;
+      if (m) { var mr = m.getBoundingClientRect(); m.style.setProperty("--mx", ((e.clientX - (mr.left + mr.width / 2)) * 0.18).toFixed(1) + "px"); m.style.setProperty("--my", ((e.clientY - (mr.top + mr.height / 2)) * 0.3).toFixed(1) + "px"); }
+    }, { passive: true });
+    document.addEventListener("pointerout", function (e) {
+      var t = e.target.closest ? e.target.closest(".tile, .day, .seg button") : null;
+      if (t && !t.contains(e.relatedTarget)) reset(t);
+    });
+  })();
 
   renderAll();
 
