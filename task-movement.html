@@ -164,7 +164,7 @@ h1 { margin: 6px 0 0; font-size: clamp(34px, 6vw, 56px); line-height: 1.05; lett
 /* Table */
 .card { margin-top: 16px; background: var(--surface); border-radius: 22px; box-shadow: var(--shadow); overflow: hidden; }
 .scroll { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; min-width: 980px; }
+table { width: 100%; border-collapse: collapse; min-width: 1120px; }
 th { text-align: left; font-size: 12px; font-weight: 600; color: var(--fg-3); letter-spacing: 0.02em; text-transform: uppercase; padding: 14px 16px; background: var(--surface-2); border-bottom: 1px solid var(--line); white-space: nowrap; }
 td { padding: 14px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
 tbody tr { animation: rise 0.5s var(--ease) both; animation-delay: calc(min(var(--i), 14) * 28ms); transition: background 0.25s; }
@@ -180,6 +180,8 @@ tbody tr:last-child td { border-bottom: 0; }
 .task a:hover { color: var(--accent); background-size: 100% 1px; }
 .urgent { display: inline-block; margin-left: 6px; font-size: 11px; font-weight: 700; color: #ff453a; }
 .who { color: var(--fg-2); font-size: 14px; }
+.new { display: inline-block; margin-left: 8px; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; padding: 2px 7px; border-radius: 999px; background: var(--accent); color: #fff; vertical-align: 1px; animation: pop 0.6s var(--ease) both; }
+@keyframes pop { from { transform: scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }
 .pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
 .pill.closed { background: var(--good-soft); color: var(--good); }
 .pill.approval { background: var(--warn-soft); color: var(--warn); }
@@ -253,7 +255,8 @@ tbody tr:last-child td { border-bottom: 0; }
   var TZ = "America/New_York";
   var PALETTE = ["#0a84ff", "#30d158", "#ff9f0a", "#bf5af2", "#ff375f", "#64d2ff", "#ffd60a", "#ac8e68", "#5e5ce6", "#66d4cf"];
   var STATUS_FILTERS = [["all", "All"], ["closed", "Closed"], ["approval", "Done - Approval"], ["other", "Other"]];
-  var SORTS = [["client", "Client"], ["new", "Newest"]];
+  var SORTS = [["client", "Client"], ["created", "Newest created"], ["new", "Last moved"]];
+  var DAY = 86400000;
   var state = { reports: [], date: null, q: "", status: "all", client: "all", sort: "client", loaded: false };
   var $ = function (id) { return document.getElementById(id); };
   var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -372,7 +375,7 @@ tbody tr:last-child td { border-bottom: 0; }
     }
     var table = el("table");
     var head = el("thead"), hr = el("tr");
-    ["Client", "Type", "Parent task", "Task", "Assignee", "Status", "Closed / updated"].forEach(function (h) { hr.appendChild(el("th", null, h)); });
+    ["Client", "Type", "Parent task", "Task", "Created", "Assignee", "Status", "Closed / updated"].forEach(function (h) { hr.appendChild(el("th", null, h)); });
     head.appendChild(hr); table.appendChild(head);
     var body = el("tbody");
     rows.forEach(function (r, i) {
@@ -383,11 +386,19 @@ tbody tr:last-child td { border-bottom: 0; }
       var c3 = el("td", "parent", r.parent || "None"); c3.setAttribute("data-l", "Parent task");
       var c4 = el("td", "task c-task"); var a = el("a", null, r.task || "Untitled"); if (r.url) { a.href = r.url; a.target = "_blank"; a.rel = "noopener noreferrer"; }
       c4.appendChild(a); if (r.urgent) c4.appendChild(el("span", "urgent", "URGENT"));
+      var ref = (current() && (current().windowEnd || current().generatedAt)) || Date.now();
+      var c4b = el("td", "when"); c4b.setAttribute("data-l", "Created");
+      if (r.created) {
+        var age = Math.max(0, Math.floor((ref - r.created) / DAY));
+        c4b.appendChild(el("b", null, dayLabel(r.created) + ", " + fmt(r.created, { year: "numeric" })));
+        c4b.appendChild(document.createTextNode(age === 0 ? "Today" : age === 1 ? "1 day ago" : age + " days ago"));
+        if (ref - r.created <= 2 * DAY) c4b.appendChild(el("span", "new", "NEW"));
+      } else { c4b.textContent = "Not recorded"; }
       var c5 = el("td", "who", r.assignee || "Unassigned"); c5.setAttribute("data-l", "Assignee");
       var c6 = el("td"); c6.setAttribute("data-l", "Status"); c6.appendChild(el("span", "pill " + kind(r.status), pretty(r.status)));
       var c7 = el("td", "when"); c7.setAttribute("data-l", "Closed / updated");
       c7.appendChild(el("b", null, dayLabel(r.ts))); c7.appendChild(document.createTextNode(timeLabel(r.ts)));
-      [c1, c2, c3, c4, c5, c6, c7].forEach(function (c) { tr.appendChild(c); });
+      [c1, c2, c3, c4, c4b, c5, c6, c7].forEach(function (c) { tr.appendChild(c); });
       body.appendChild(tr);
     });
     table.appendChild(body); host.appendChild(table);
@@ -403,7 +414,8 @@ tbody tr:last-child td { border-bottom: 0; }
       return true;
     });
     rows.sort(function (a, b) {
-      if (state.sort === "client") { var c = String(a.client).localeCompare(String(b.client)); if (c) return c; }
+      if (state.sort === "client") { var c = String(a.client).localeCompare(String(b.client)); if (c) return c; return (b.created || 0) - (a.created || 0); }
+      if (state.sort === "created") return (b.created || 0) - (a.created || 0);
       return (b.ts || 0) - (a.ts || 0);
     });
     return rows;
