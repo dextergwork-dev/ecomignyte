@@ -72,6 +72,7 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
+html, body { overflow-x: clip; }
 body {
   background: var(--bg);
   color: var(--fg);
@@ -87,7 +88,7 @@ a { color: inherit; }
 button, select, input { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
 
-.wrap { max-width: 1120px; margin-inline: auto; }
+.wrap { max-width: 1560px; margin-inline: auto; }
 
 /* Glass bar */
 .bar {
@@ -101,7 +102,7 @@ button, select, input { font: inherit; color: inherit; }
   backdrop-filter: saturate(180%) blur(20px);
   border-bottom: 1px solid var(--line);
 }
-.bar-in { max-width: 1120px; margin-inline: auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.bar-in { max-width: 1560px; margin-inline: auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .bar-title { font-weight: 600; font-size: 15px; letter-spacing: -0.015em; }
 .live { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--fg-2); }
 .pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--good); position: relative; }
@@ -169,7 +170,8 @@ h1 { margin: 6px 0 0; font-size: clamp(34px, 6vw, 56px); line-height: 1.05; lett
 /* Table */
 .card { margin-top: 16px; background: var(--surface); border-radius: 22px; box-shadow: var(--shadow); overflow: hidden; }
 .scroll { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; min-width: 1360px; }
+table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+th:nth-child(1) { width: 14%; } th:nth-child(2) { width: 34%; } th:nth-child(3) { width: 13%; } th:nth-child(4) { width: 13%; } th:nth-child(5) { width: 13%; } th:nth-child(6) { width: 13%; }
 th { text-align: left; font-size: 12px; font-weight: 600; color: var(--fg-3); letter-spacing: 0.02em; text-transform: uppercase; padding: 14px 16px; background: var(--surface-2); border-bottom: 1px solid var(--line); white-space: nowrap; }
 td { padding: 14px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
 tbody tr { animation: rise 0.5s var(--ease) backwards; animation-delay: calc(min(var(--i), 14) * 28ms); transition: background 0.25s; }
@@ -182,7 +184,7 @@ tbody tr:last-child td { border-bottom: 0; }
 .type { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap; background: var(--mute-soft); color: var(--mute); }
 .type.main { background: var(--info-soft); color: var(--info); }
 .parent { color: var(--fg-2); font-size: 13px; max-width: 260px; }
-.task { min-width: 240px; }
+.task { min-width: 0; }
 .task a { text-decoration: none; font-weight: 500; background-image: linear-gradient(var(--accent), var(--accent)); background-size: 0 1px; background-position: 0 100%; background-repeat: no-repeat; transition: background-size 0.4s var(--ease), color 0.25s; }
 .task a:hover { color: var(--accent); background-size: 100% 1px; }
 .urgent { display: inline-block; margin-left: 6px; font-size: 11px; font-weight: 700; color: #ff453a; }
@@ -197,12 +199,12 @@ tbody tr:last-child td { border-bottom: 0; }
 .tile.info .v { color: var(--info); }
 .new { display: inline-block; margin-left: 8px; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; padding: 2px 7px; border-radius: 999px; background: var(--accent); color: #fff; vertical-align: 1px; animation: pop 0.6s var(--ease) both; }
 @keyframes pop { from { transform: scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }
-.pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+.pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; white-space: normal; text-align: center; }
 .pill.closed { background: var(--good-soft); color: var(--good); }
 .pill.approval { background: var(--warn-soft); color: var(--warn); }
 .pill.launch { background: var(--info-soft); color: var(--info); }
 .pill.other { background: var(--mute-soft); color: var(--mute); }
-.when { color: var(--fg-2); font-size: 13px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.when { color: var(--fg-2); font-size: 13px; font-variant-numeric: tabular-nums; }
 .when b { display: block; color: var(--fg); font-weight: 500; }
 
 .empty { padding: 64px 24px; text-align: center; color: var(--fg-2); }
@@ -218,7 +220,7 @@ tbody tr:last-child td { border-bottom: 0; }
 
 /* Created groups */
 .groups { display: block; }
-.gcols, .gh { display: grid; grid-template-columns: 36px 160px minmax(260px, 1fr) 140px 160px 150px 150px; gap: 12px; align-items: start; padding: 14px 16px; }
+.gcols, .gh { display: grid; grid-template-columns: 36px 150px minmax(0, 1fr) 130px 160px 190px; gap: 12px; align-items: start; padding: 14px 16px; }
 .gcols { background: var(--surface-2); border-bottom: 1px solid var(--line); font-size: 12px; font-weight: 600; color: var(--fg-3); letter-spacing: 0.02em; text-transform: uppercase; align-items: center; }
 .grp { border-bottom: 1px solid var(--line); animation: rise 0.5s var(--ease) backwards; animation-delay: calc(min(var(--i), 10) * 40ms); }
 .grp:last-child { border-bottom: 0; }
@@ -236,9 +238,9 @@ tbody tr:last-child td { border-bottom: 0; }
 .gp { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.55s var(--ease); }
 .gp > div { overflow: hidden; min-height: 0; }
 .grp.open .gp { grid-template-rows: 1fr; }
-.subs { margin: 0 16px 16px 52px; border-radius: 16px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); overflow-x: auto; opacity: 0; transform: translateY(-8px); transition: opacity 0.4s, transform 0.55s var(--ease); }
+.subs { margin: 0 16px 16px 52px; border-radius: 16px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); overflow: hidden; opacity: 0; transform: translateY(-8px); transition: opacity 0.4s, transform 0.55s var(--ease); }
 .grp.open .subs { opacity: 1; transform: none; }
-.srow { display: grid; grid-template-columns: minmax(240px, 1fr) 130px 160px 150px 130px; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--line); align-items: start; min-width: 760px; }
+.srow { display: grid; grid-template-columns: minmax(0, 1fr) 120px 160px 150px 190px; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--line); align-items: start; }
 .srow:first-child { border-top: 0; }
 .srow.shead { font-size: 11px; font-weight: 600; color: var(--fg-3); letter-spacing: 0.03em; text-transform: uppercase; padding-block: 10px; }
 .grp.open .srow:not(.shead) { animation: rise 0.45s var(--ease) backwards; animation-delay: calc(var(--k) * 45ms + 120ms); }
@@ -248,8 +250,7 @@ tbody tr:last-child td { border-bottom: 0; }
 .due em { font-style: normal; font-size: 12px; color: var(--fg-3); }
 .due em.late { color: #ff453a; font-weight: 600; }
 .due.dim { color: var(--fg-3); }
-@media (max-width: 1100px) { .groups { overflow-x: auto; } .gcols, .gh { min-width: 1000px; } }
-@media (max-width: 720px) {
+@media (max-width: 860px) {
   .groups { overflow: visible; }
   .gcols { display: none; }
   .gh { min-width: 0; grid-template-columns: 36px 1fr; gap: 6px 10px; }
@@ -259,6 +260,22 @@ tbody tr:last-child td { border-bottom: 0; }
   .srow.shead { display: none; }
   .srow .task { grid-column: 1 / -1; }
   .srow > [data-l]::before { content: attr(data-l); display: block; font-size: 10px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--fg-3); }
+}
+
+.tline { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.tline a { overflow-wrap: anywhere; }
+td.task .parent { margin-top: 4px; max-width: none; font-size: 12px; color: var(--fg-3); overflow-wrap: anywhere; }
+.by { display: block; font-size: 12px; color: var(--fg-3); margin-top: 2px; white-space: normal; }
+.by.dim { opacity: 0.8; }
+.when .new { margin-left: 6px; }
+td, th { overflow-wrap: anywhere; }
+.notice { display: flex; align-items: center; gap: 10px; margin-top: 16px; padding: 12px 16px; border-radius: 14px; background: var(--warn-soft); color: var(--warn); font-size: 14px; font-weight: 500; animation: rise 0.5s var(--ease) backwards; }
+.notice[hidden] { display: none; }
+.notice i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: none; }
+@media (max-width: 1000px) {
+  .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .gcols, .gh { grid-template-columns: 36px 120px minmax(0, 1fr) 120px 130px 150px; gap: 10px; }
+  .srow { grid-template-columns: minmax(0, 1fr) 110px 130px 130px 150px; }
 }
 
 /* Pointer motion */
@@ -281,7 +298,7 @@ h1 .w { display: inline-block; animation: rise 0.8s var(--ease) backwards; anima
 @media (max-width: 880px) {
   .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-@media (max-width: 720px) {
+@media (max-width: 860px) {
   .scroll { overflow: visible; }
   table, tbody, tr, td { display: block; min-width: 0; }
   table { min-width: 0; }
@@ -291,6 +308,7 @@ h1 .w { display: inline-block; animation: rise 0.8s var(--ease) backwards; anima
   td { padding: 0; border: 0; }
   td[data-l]::before { content: attr(data-l); display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--fg-3); margin-bottom: 2px; }
   td.c-task::before, td.c-client::before { display: none; }
+  th:nth-child(n) { width: auto; }
   .task { min-width: 0; font-size: 16px; }
   .parent { max-width: none; }
   .meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
@@ -313,6 +331,8 @@ h1 .w { display: inline-block; animation: rise 0.8s var(--ease) backwards; anima
     <h1 id="h1">What moved in the last 24 hours</h1>
     <p class="sub" id="sub">Tasks closed or sent for approval across every client, refreshed each morning.</p>
   </header>
+
+  <div class="notice" id="notice" role="status" hidden><i></i><span id="noticeTxt"></span></div>
 
   <div class="days" id="days" role="group" aria-label="Report date"></div>
 
@@ -476,41 +496,36 @@ h1 .w { display: inline-block; animation: rise 0.8s var(--ease) backwards; anima
     if (state.tab === "created") { renderGroups(rows, host); return; }
     var table = el("table");
     var head = el("thead"), hr = el("tr");
-    var made = false;
-    (made
-      ? ["Client", "Type", "Parent task", "Task", "Created", "Created by", "Assignee", "Status"]
-      : ["Client", "Type", "Parent task", "Task", "Created", "Created by", "Assignee", "Status", "Closed / moved by", "Closed / updated"]
-    ).forEach(function (h) { hr.appendChild(el("th", null, h)); });
+    ["Client", "Task", "Assignee", "Status", "Created", "Closed / moved"].forEach(function (h) { hr.appendChild(el("th", null, h)); });
     head.appendChild(hr); table.appendChild(head);
     var body = el("tbody");
+    var ref = (current() && (current().windowEnd || current().generatedAt)) || Date.now();
     rows.forEach(function (r, i) {
       var tr = el("tr"); tr.style.setProperty("--i", i);
       var c1 = el("td", "c-client"); var cl = el("span", "client"); var dot = el("span", "dot"); dot.style.background = colorFor(r.client || "?");
       cl.appendChild(dot); cl.appendChild(document.createTextNode(r.client || "Unassigned client")); c1.appendChild(cl);
-      var c2 = el("td"); c2.setAttribute("data-l", "Type"); c2.appendChild(el("span", "type " + (r.type === "Main" ? "main" : ""), r.type || ""));
-      var c3 = el("td", "parent", r.parent || "None"); c3.setAttribute("data-l", "Parent task");
-      var c4 = el("td", "task c-task"); var a = el("a", null, r.task || "Untitled"); if (r.url) { a.href = r.url; a.target = "_blank"; a.rel = "noopener noreferrer"; }
-      c4.appendChild(a); if (r.urgent) c4.appendChild(el("span", "urgent", "URGENT"));
-      var ref = (current() && (current().windowEnd || current().generatedAt)) || Date.now();
-      var c4b = el("td", "when"); c4b.setAttribute("data-l", "Created");
+      var c2 = el("td", "task c-task");
+      var line = el("div", "tline"); var a = el("a", null, r.task || "Untitled"); if (r.url) { a.href = r.url; a.target = "_blank"; a.rel = "noopener noreferrer"; }
+      line.appendChild(a); if (r.urgent) line.appendChild(el("span", "urgent", "URGENT"));
+      line.appendChild(el("span", "type " + (r.type === "Main" ? "main" : ""), r.type || ""));
+      c2.appendChild(line);
+      if (r.parent && r.parent !== "None") c2.appendChild(el("div", "parent", "Under " + r.parent));
+      var c3 = el("td", "who", r.assignee || "Unassigned"); c3.setAttribute("data-l", "Assignee");
+      var c4 = el("td"); c4.setAttribute("data-l", "Status"); c4.appendChild(el("span", "pill " + kind(r.status), pretty(r.status)));
+      var c5 = el("td", "when"); c5.setAttribute("data-l", "Created");
       if (r.created) {
         var age = Math.max(0, Math.floor((ref - r.created) / DAY));
-        c4b.appendChild(el("b", null, dayLabel(r.created) + ", " + fmt(r.created, { year: "numeric" })));
-        c4b.appendChild(document.createTextNode(age === 0 ? "Today" : age === 1 ? "1 day ago" : age + " days ago"));
-        if (ref - r.created <= 2 * DAY) c4b.appendChild(el("span", "new", "NEW"));
-      } else { c4b.textContent = "Not recorded"; }
-      var cb = el("td", "who", r.creator || "Not recorded"); cb.setAttribute("data-l", "Created by");
-      var c5 = el("td", "who", r.assignee || "Unassigned"); c5.setAttribute("data-l", "Assignee");
-      var c6 = el("td"); c6.setAttribute("data-l", "Status"); c6.appendChild(el("span", "pill " + kind(r.status), pretty(r.status)));
-      var cells = [c1, c2, c3, c4, c4b, cb, c5, c6];
-      if (!made) {
-        var c6b = el("td", "who", r.closedBy || "Not tracked"); c6b.setAttribute("data-l", "Closed / moved by");
-        if (!r.closedBy) { c6b.classList.add("dim"); c6b.title = "ClickUp does not report who changed a status through its API."; }
-        var c7 = el("td", "when"); c7.setAttribute("data-l", "Closed / updated");
-        c7.appendChild(el("b", null, dayLabel(r.ts))); c7.appendChild(document.createTextNode(timeLabel(r.ts)));
-        cells.push(c6b, c7);
-      }
-      cells.forEach(function (c) { tr.appendChild(c); });
+        c5.appendChild(el("b", null, dayLabel(r.created) + ", " + fmt(r.created, { year: "numeric" })));
+        c5.appendChild(document.createTextNode(age === 0 ? "Today" : age === 1 ? "1 day ago" : age + " days ago"));
+        if (ref - r.created <= 2 * DAY) c5.appendChild(el("span", "new", "NEW"));
+      } else c5.textContent = "Not recorded";
+      c5.appendChild(el("span", "by", "by " + (r.creator || "not recorded")));
+      var c6 = el("td", "when"); c6.setAttribute("data-l", "Closed / moved");
+      c6.appendChild(el("b", null, dayLabel(r.ts))); c6.appendChild(document.createTextNode(timeLabel(r.ts)));
+      var by = el("span", "by" + (r.closedBy ? "" : " dim"), r.closedBy ? "by " + r.closedBy : "by not tracked");
+      if (!r.closedBy) by.title = "ClickUp does not report who changed a status through its API.";
+      c6.appendChild(by);
+      [c1, c2, c3, c4, c5, c6].forEach(function (c) { tr.appendChild(c); });
       body.appendChild(tr);
     });
     table.appendChild(body); host.appendChild(table);
@@ -535,7 +550,7 @@ h1 .w { display: inline-block; animation: rise 0.8s var(--ease) backwards; anima
     var report = current(), ref = (report && (report.windowEnd || report.generatedAt)) || Date.now();
     var wrap = el("div", "groups");
     var cols = el("div", "gcols");
-    ["", "Client", "Main task", "Status", "Assignee", "Created", "Created by"].forEach(function (h) { cols.appendChild(el("span", null, h)); });
+    ["", "Client", "Main task", "Status", "Assignee", "Created"].forEach(function (h) { cols.appendChild(el("span", null, h)); });
     wrap.appendChild(cols);
     list.forEach(function (gp, i) {
       var open = !!state.open[gp.url];
@@ -553,8 +568,8 @@ h1 .w { display: inline-block; animation: rise 0.8s var(--ease) backwards; anima
       head.appendChild(el("span", "who", gp.assignee || "Unassigned"));
       var c5 = el("span", "when");
       if (gp.created) { c5.appendChild(el("b", null, dayLabel(gp.created))); c5.appendChild(document.createTextNode(gp.isNew ? timeLabel(gp.created) : "Task created earlier")); } else c5.textContent = "Not recorded";
+      c5.appendChild(el("span", "by", "by " + (gp.creator || "not recorded")));
       head.appendChild(c5);
-      head.appendChild(el("span", "who", gp.creator || "Not recorded"));
       var panel = el("div", "gp"); var inner = el("div"); var box = el("div", "subs");
       var sh = el("div", "srow shead"); ["Subtask", "Status", "Assignee", "Due date", "Created"].forEach(function (h) { sh.appendChild(el("span", null, h)); }); box.appendChild(sh);
       subs.slice().sort(function (x, y) { return (y.created || 0) - (x.created || 0); }).forEach(function (x, k) {
@@ -565,7 +580,7 @@ h1 .w { display: inline-block; animation: rise 0.8s var(--ease) backwards; anima
         var st = el("span"); st.setAttribute("data-l", "Status"); st.appendChild(el("span", "pill " + kind(x.status), pretty(x.status))); row.appendChild(st);
         var as = el("span", "who", x.assignee || "Unassigned"); as.setAttribute("data-l", "Assignee"); row.appendChild(as);
         var du = dueCell(x.due, ref); du.setAttribute("data-l", "Due date"); row.appendChild(du);
-        var cr = el("span", "when"); cr.setAttribute("data-l", "Created"); if (x.created) { cr.appendChild(el("b", null, dayLabel(x.created))); cr.appendChild(document.createTextNode(timeLabel(x.created))); } row.appendChild(cr);
+        var cr = el("span", "when"); cr.setAttribute("data-l", "Created"); if (x.created) { cr.appendChild(el("b", null, dayLabel(x.created))); cr.appendChild(document.createTextNode(timeLabel(x.created))); cr.appendChild(el("span", "by", "by " + (x.creator || "not recorded"))); } row.appendChild(cr);
         box.appendChild(row);
       });
       inner.appendChild(box); panel.appendChild(inner);
@@ -624,7 +639,23 @@ h1 .w { display: inline-block; animation: rise 0.8s var(--ease) backwards; anima
     renderTable(filtered(report));
   }
 
+  function etNow() {
+    var o = {}; new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date()).forEach(function (p) { o[p.type] = p.value; });
+    return { date: o.year + "-" + o.month + "-" + o.day, mins: (+o.hour) * 60 + (+o.minute) };
+  }
+  function checkFresh() {
+    var n = $("notice");
+    if (!state.loaded || !state.reports.length) { n.hidden = true; return; }
+    var latest = state.reports[0], now = etNow();
+    var gap = Math.round((Date.parse(now.date + "T00:00:00Z") - Date.parse(latest.date + "T00:00:00Z")) / DAY);
+    var stale = gap >= 2 || (gap === 1 && now.mins >= 9 * 60 + 50);
+    n.hidden = !stale;
+    if (stale) $("noticeTxt").textContent = "Today's report hasn't arrived yet. You are looking at " + (latest.pillLabel ? "the backfill" : "the report for " + latest.date) + ", updated " + (latest.generatedAt ? dayLabel(latest.generatedAt) + " at " + timeLabel(latest.generatedAt) : "earlier") + ". Reports normally land around 8:30 AM ET.";
+  }
+  setInterval(checkFresh, 300000);
+
   function renderAll() {
+    checkFresh();
     var report = current();
     renderDays();
     if (report) {
