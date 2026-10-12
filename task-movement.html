@@ -131,7 +131,7 @@ h1 { margin: 6px 0 0; font-size: clamp(34px, 6vw, 56px); line-height: 1.05; lett
 .day[aria-pressed="true"] small { color: inherit; opacity: 0.6; }
 
 /* Stat tiles */
-.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 20px; }
+.tiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-top: 20px; }
 .tile {
   background: var(--surface); border-radius: 20px; padding: 18px 18px 16px; box-shadow: var(--shadow);
   animation: rise 0.7s var(--ease) both; animation-delay: calc(var(--i) * 70ms + 120ms);
@@ -164,7 +164,7 @@ h1 { margin: 6px 0 0; font-size: clamp(34px, 6vw, 56px); line-height: 1.05; lett
 /* Table */
 .card { margin-top: 16px; background: var(--surface); border-radius: 22px; box-shadow: var(--shadow); overflow: hidden; }
 .scroll { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; min-width: 1120px; }
+table { width: 100%; border-collapse: collapse; min-width: 1360px; }
 th { text-align: left; font-size: 12px; font-weight: 600; color: var(--fg-3); letter-spacing: 0.02em; text-transform: uppercase; padding: 14px 16px; background: var(--surface-2); border-bottom: 1px solid var(--line); white-space: nowrap; }
 td { padding: 14px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
 tbody tr { animation: rise 0.5s var(--ease) both; animation-delay: calc(min(var(--i), 14) * 28ms); transition: background 0.25s; }
@@ -180,6 +180,14 @@ tbody tr:last-child td { border-bottom: 0; }
 .task a:hover { color: var(--accent); background-size: 100% 1px; }
 .urgent { display: inline-block; margin-left: 6px; font-size: 11px; font-weight: 700; color: #ff453a; }
 .who { color: var(--fg-2); font-size: 14px; }
+.who.dim { color: var(--fg-3); font-size: 13px; }
+.tabs { margin-top: 28px; }
+.tools { margin-top: 14px; }
+.seg.lg button { padding: 8px 18px; font-size: 14px; }
+.tile.pick { cursor: pointer; }
+.tile.pick:active { transform: scale(0.98); }
+.tile.on { box-shadow: 0 0 0 2px var(--accent), var(--shadow); }
+.tile.info .v { color: var(--info); }
 .new { display: inline-block; margin-left: 8px; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; padding: 2px 7px; border-radius: 999px; background: var(--accent); color: #fff; vertical-align: 1px; animation: pop 0.6s var(--ease) both; }
 @keyframes pop { from { transform: scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }
 .pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
@@ -238,6 +246,8 @@ tbody tr:last-child td { border-bottom: 0; }
 
   <section class="tiles" id="tiles" aria-label="Summary"></section>
 
+  <div class="tabs"><div class="seg lg" id="tabSeg" role="group" aria-label="View"><span class="thumb"></span></div></div>
+
   <div class="tools">
     <label class="search"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="9" r="6"/><path d="m14 14 4 4"/></svg>
       <input id="q" type="search" placeholder="Search tasks, parents, people" autocomplete="off"></label>
@@ -257,7 +267,9 @@ tbody tr:last-child td { border-bottom: 0; }
   var STATUS_FILTERS = [["all", "All"], ["closed", "Closed"], ["approval", "Done - Approval"], ["other", "Other"]];
   var SORTS = [["client", "Client"], ["created", "Newest created"], ["new", "Last moved"]];
   var DAY = 86400000;
-  var state = { reports: [], date: null, q: "", status: "all", client: "all", sort: "client", loaded: false };
+  var TABS = [["moved", "Closed or approved"], ["created", "Created"]];
+  var state = { reports: [], date: null, tab: "moved", q: "", status: "all", client: "all", sort: "client", loaded: false };
+  function listFor(report) { return report ? (state.tab === "created" ? (report.createdRows || []) : (report.rows || [])) : []; }
   var $ = function (id) { return document.getElementById(id); };
   var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -273,7 +285,8 @@ tbody tr:last-child td { border-bottom: 0; }
   }
   function pretty(status) {
     var s = String(status || "");
-    return s.replace(/\b\w/g, function (c) { return c.toUpperCase(); }).replace("Done - Approval", "Done - Approval");
+    if (s && s.charAt(0) === s.charAt(0).toUpperCase()) return s;
+    return s.replace(/\b\w/g, function (c) { return c.toUpperCase(); });
   }
   function fmt(ts, opts) { return new Intl.DateTimeFormat("en-US", Object.assign({ timeZone: TZ }, opts)).format(new Date(ts)); }
   function dayLabel(ts) { return fmt(ts, { weekday: "short", month: "short", day: "numeric" }); }
@@ -311,7 +324,10 @@ tbody tr:last-child td { border-bottom: 0; }
       b.type = "button";
       if (counts && counts[it[0]] != null) b.appendChild(el("i", null, String(counts[it[0]])));
       b.setAttribute("aria-pressed", String(state[key] === it[0]));
-      b.addEventListener("click", function () { state[key] = it[0]; renderBody(); });
+      b.addEventListener("click", function () {
+        state[key] = it[0];
+        if (key === "tab") { state.status = "all"; state.client = "all"; renderAll(); } else renderBody();
+      });
       host.appendChild(b);
     });
     placeThumb(host);
@@ -330,21 +346,30 @@ tbody tr:last-child td { border-bottom: 0; }
     });
   }
 
-  function renderTiles(rows, report) {
+  function renderTiles(report) {
     var host = $("tiles");
+    var rows = report.rows || [], made = report.createdRows || [];
     var closed = rows.filter(function (r) { return kind(r.status) === "closed"; }).length;
     var appr = rows.filter(function (r) { return kind(r.status) === "approval"; }).length;
-    var clients = {}; rows.forEach(function (r) { clients[r.client] = 1; });
-    var main = rows.filter(function (r) { return r.type === "Main"; }).length;
+    var clients = {}; rows.concat(made).forEach(function (r) { clients[r.client] = 1; });
+    var main = made.filter(function (r) { return r.type === "Main"; }).length;
     var data = [
-      ["Moved", rows.length, "", main + " main · " + (rows.length - main) + " subtasks"],
-      ["Closed", closed, "good", "Finished and archived"],
-      ["Done - Approval", appr, "warn", "Waiting on countercheck"],
-      ["Clients", Object.keys(clients).length, "", "With movement"]
+      ["Moved", rows.length, "", "Closed or sent for approval", "moved"],
+      ["Closed", closed, "good", "Finished and archived", "moved"],
+      ["Done - Approval", appr, "warn", "Waiting on countercheck", "moved"],
+      ["Created", made.length, "info", main + " main · " + (made.length - main) + " subtasks", "created"],
+      ["Clients", Object.keys(clients).length, "", "With activity", null]
     ];
     host.textContent = "";
     data.forEach(function (d, i) {
-      var t = el("div", "tile " + d[2]); t.style.setProperty("--i", i);
+      var t = el("div", "tile " + d[2] + (d[4] ? " pick" : "")); t.style.setProperty("--i", i);
+      if (d[4]) {
+        t.tabIndex = 0; t.setAttribute("role", "button");
+        if (d[4] === state.tab && (d[0] === "Moved" || d[0] === "Created")) t.classList.add("on");
+        var go = function () { state.tab = d[4]; state.status = d[0] === "Closed" ? "closed" : d[0] === "Done - Approval" ? "approval" : "all"; renderAll(); };
+        t.addEventListener("click", go);
+        t.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+      }
       t.appendChild(el("div", "k", d[0]));
       var v = el("div", "v", "0"); t.appendChild(v);
       t.appendChild(el("div", "d", d[3]));
@@ -369,13 +394,18 @@ tbody tr:last-child td { border-bottom: 0; }
     }
     if (!rows.length) {
       var e2 = el("div", "empty");
-      e2.appendChild(el("h2", null, "Nothing matches"));
-      e2.appendChild(el("p", null, "Try a different status, client or search."));
+      var none = listFor(current()).length === 0;
+      e2.appendChild(el("h2", null, none ? (state.tab === "created" ? "No new tasks in this report" : "Nothing moved in this report") : "Nothing matches"));
+      e2.appendChild(el("p", null, none ? "Reports from the daily refresh list every task created or moved in the 24 hours before 8:30 AM ET." : "Try a different status, client or search."));
       host.appendChild(e2); return;
     }
     var table = el("table");
     var head = el("thead"), hr = el("tr");
-    ["Client", "Type", "Parent task", "Task", "Created", "Assignee", "Status", "Closed / updated"].forEach(function (h) { hr.appendChild(el("th", null, h)); });
+    var made = state.tab === "created";
+    (made
+      ? ["Client", "Type", "Parent task", "Task", "Created", "Created by", "Assignee", "Status"]
+      : ["Client", "Type", "Parent task", "Task", "Created", "Created by", "Assignee", "Status", "Closed / moved by", "Closed / updated"]
+    ).forEach(function (h) { hr.appendChild(el("th", null, h)); });
     head.appendChild(hr); table.appendChild(head);
     var body = el("tbody");
     rows.forEach(function (r, i) {
@@ -394,38 +424,47 @@ tbody tr:last-child td { border-bottom: 0; }
         c4b.appendChild(document.createTextNode(age === 0 ? "Today" : age === 1 ? "1 day ago" : age + " days ago"));
         if (ref - r.created <= 2 * DAY) c4b.appendChild(el("span", "new", "NEW"));
       } else { c4b.textContent = "Not recorded"; }
+      var cb = el("td", "who", r.creator || "Not recorded"); cb.setAttribute("data-l", "Created by");
       var c5 = el("td", "who", r.assignee || "Unassigned"); c5.setAttribute("data-l", "Assignee");
       var c6 = el("td"); c6.setAttribute("data-l", "Status"); c6.appendChild(el("span", "pill " + kind(r.status), pretty(r.status)));
-      var c7 = el("td", "when"); c7.setAttribute("data-l", "Closed / updated");
-      c7.appendChild(el("b", null, dayLabel(r.ts))); c7.appendChild(document.createTextNode(timeLabel(r.ts)));
-      [c1, c2, c3, c4, c4b, c5, c6, c7].forEach(function (c) { tr.appendChild(c); });
+      var cells = [c1, c2, c3, c4, c4b, cb, c5, c6];
+      if (!made) {
+        var c6b = el("td", "who", r.closedBy || "Not tracked"); c6b.setAttribute("data-l", "Closed / moved by");
+        if (!r.closedBy) { c6b.classList.add("dim"); c6b.title = "ClickUp does not report who changed a status through its API."; }
+        var c7 = el("td", "when"); c7.setAttribute("data-l", "Closed / updated");
+        c7.appendChild(el("b", null, dayLabel(r.ts))); c7.appendChild(document.createTextNode(timeLabel(r.ts)));
+        cells.push(c6b, c7);
+      }
+      cells.forEach(function (c) { tr.appendChild(c); });
       body.appendChild(tr);
     });
     table.appendChild(body); host.appendChild(table);
   }
 
   function filtered(report) {
-    var rows = (report && report.rows || []).slice();
+    var rows = listFor(report).slice();
     var q = state.q.trim().toLowerCase();
     rows = rows.filter(function (r) {
       if (state.status !== "all") { var k = kind(r.status); if (state.status === "other" ? (k === "closed" || k === "approval") : k !== state.status) return false; }
       if (state.client !== "all" && r.client !== state.client) return false;
-      if (q) { var hay = [r.client, r.task, r.parent, r.assignee, r.status].join(" ").toLowerCase(); if (hay.indexOf(q) < 0) return false; }
+      if (q) { var hay = [r.client, r.task, r.parent, r.assignee, r.creator, r.closedBy, r.status].join(" ").toLowerCase(); if (hay.indexOf(q) < 0) return false; }
       return true;
     });
     rows.sort(function (a, b) {
       if (state.sort === "client") { var c = String(a.client).localeCompare(String(b.client)); if (c) return c; return (b.created || 0) - (a.created || 0); }
       if (state.sort === "created") return (b.created || 0) - (a.created || 0);
-      return (b.ts || 0) - (a.ts || 0);
+      return (b.ts || b.created || 0) - (a.ts || a.created || 0);
     });
     return rows;
   }
 
   function renderBody() {
     var report = current();
-    var all = (report && report.rows) || [];
+    var all = listFor(report);
     var counts = { all: all.length, closed: 0, approval: 0, other: 0 };
     all.forEach(function (r) { counts[kind(r.status) === "launch" ? "other" : kind(r.status)]++; });
+    var tabCounts = { moved: ((report && report.rows) || []).length, created: ((report && report.createdRows) || []).length };
+    buildSeg($("tabSeg"), TABS, "tab", tabCounts);
     buildSeg($("statusSeg"), STATUS_FILTERS, "status", counts);
     buildSeg($("sortSeg"), SORTS, "sort");
     var sel = $("clientSel"); var names = {}; all.forEach(function (r) { names[r.client] = 1; });
@@ -442,9 +481,9 @@ tbody tr:last-child td { border-bottom: 0; }
     renderDays();
     if (report) {
       $("eyebrow").textContent = report.label || "ClickUp · Client View";
-      $("sub").textContent = "From " + dayLabel(report.windowStart) + ", " + timeLabel(report.windowStart) + " to " + dayLabel(report.windowEnd) + ", " + timeLabel(report.windowEnd) + ". Tasks closed or sent for approval across every client.";
+      $("sub").textContent = "From " + dayLabel(report.windowStart) + ", " + timeLabel(report.windowStart) + " to " + dayLabel(report.windowEnd) + ", " + timeLabel(report.windowEnd) + ". Tasks closed, sent for approval or created across every client.";
       $("gen").textContent = report.generatedAt ? "Updated " + dayLabel(report.generatedAt) + " at " + timeLabel(report.generatedAt) : "";
-      renderTiles(report.rows || [], report);
+      renderTiles(report);
     } else {
       $("tiles").textContent = "";
     }
@@ -453,7 +492,7 @@ tbody tr:last-child td { border-bottom: 0; }
 
   $("q").addEventListener("input", function (e) { state.q = e.target.value; renderBody(); });
   $("clientSel").addEventListener("change", function (e) { state.client = e.target.value; renderBody(); });
-  window.addEventListener("resize", function () { placeThumb($("statusSeg")); placeThumb($("sortSeg")); });
+  window.addEventListener("resize", function () { placeThumb($("tabSeg")); placeThumb($("statusSeg")); placeThumb($("sortSeg")); });
 
   renderAll();
 
