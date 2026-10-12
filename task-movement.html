@@ -291,7 +291,11 @@ td, th { overflow-wrap: anywhere; }
 .aurora i:nth-child(3) { width: 260px; height: 220px; left: 70%; top: 0; background: var(--good); --d: 26px; animation-duration: 22s; opacity: 0.32; }
 @keyframes drift { from { transform: translate(0, 0) scale(1); } to { transform: translate(36px, 24px) scale(1.12); } }
 h1 .w { display: inline-block; animation: rise 0.8s var(--ease) backwards; animation-delay: calc(var(--k) * 70ms + 80ms); }
-.eyebrow, .sub { animation: rise 0.8s var(--ease) backwards; }
+.eyebrow, .sub, .stamp { animation: rise 0.8s var(--ease) backwards; }
+.stamp { display: inline-flex; align-items: center; gap: 10px; margin-top: 14px; padding: 7px 14px 7px 12px; border-radius: 999px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); font-size: 13px; color: var(--fg-2); animation-delay: 0.3s; }
+.stamp[hidden] { display: none; }
+.stamp b { color: var(--fg); font-weight: 600; }
+.stamp.old .pulse, .stamp.old .pulse::after { background: var(--warn); }
 .sub { animation-delay: 0.45s; }
 @media (prefers-reduced-motion: reduce) { .aurora i { animation: none; } .field { display: none; } }
 
@@ -329,6 +333,7 @@ h1 .w { display: inline-block; animation: rise 0.8s var(--ease) backwards; anima
     <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
     <div class="eyebrow" id="eyebrow">ClickUp · Client View</div>
     <h1 id="h1">What moved in the last 24 hours</h1>
+    <div class="stamp" id="stamp" hidden><span class="pulse"></span><span id="stampTxt"></span></div>
     <p class="sub" id="sub">Tasks closed or sent for approval across every client, refreshed each morning.</p>
   </header>
 
@@ -666,8 +671,28 @@ h1 .w { display: inline-block; animation: rise 0.8s var(--ease) backwards; anima
   }
   setInterval(checkFresh, 300000);
 
+  function ago(ms) {
+    var m = Math.max(0, Math.round((Date.now() - ms) / 60000));
+    if (m < 1) return "just now";
+    if (m < 60) return m + (m === 1 ? " minute ago" : " minutes ago");
+    var h = Math.round(m / 60); if (h < 24) return h + (h === 1 ? " hour ago" : " hours ago");
+    var d = Math.round(h / 24); return d + (d === 1 ? " day ago" : " days ago");
+  }
+  function updateStamp() {
+    var r = current(), st = $("stamp"), top = state.reports[0];
+    if (!r || !r.generatedAt) { st.hidden = true; if (top && top.generatedAt) $("liveTxt").textContent = "Last updated " + dayLabel(top.generatedAt) + ", " + timeLabel(top.generatedAt) + " ET · " + ago(top.generatedAt); return; }
+    st.hidden = false;
+    st.classList.toggle("old", Date.now() - r.generatedAt > 30 * 3600000);
+    var t = $("stampTxt"); t.textContent = "";
+    t.appendChild(document.createTextNode("Last updated "));
+    t.appendChild(el("b", null, dayLabel(r.generatedAt) + " at " + timeLabel(r.generatedAt) + " ET"));
+    t.appendChild(document.createTextNode(" · " + ago(r.generatedAt) + " · refreshes daily around 8:30 AM ET"));
+    if (top && top.generatedAt) $("liveTxt").textContent = "Last updated " + dayLabel(top.generatedAt) + ", " + timeLabel(top.generatedAt) + " ET · " + ago(top.generatedAt);
+  }
+  setInterval(updateStamp, 60000);
+
   function renderAll() {
-    checkFresh();
+    checkFresh(); updateStamp();
     var report = current();
     renderDays();
     if (report) {
