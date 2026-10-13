@@ -212,6 +212,16 @@ tbody tr:last-child td { border-bottom: 0; }
 .stsel:hover { transform: translateY(-1px); }
 .stsel:disabled { opacity: 0.55; cursor: progress; }
 .stsel option { color: initial; background: initial; }
+.scrim { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0, 0, 0, 0.38); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); animation: fadeIn 0.25s ease; }
+.dlg { width: min(420px, 100%); background: var(--surface); color: var(--fg); border-radius: 20px; padding: 24px; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35); animation: popIn 0.4s var(--ease); }
+.dlg h3 { margin: 0 0 8px; font-size: 18px; letter-spacing: -0.01em; }
+.dlg p { margin: 0 0 6px; font-size: 14px; color: var(--fg-2); line-height: 1.45; overflow-wrap: anywhere; }
+.dlg .flow { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 14px 0 6px; }
+.dlg .acts { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+.dlg .acts button { border: 0; cursor: pointer; font: inherit; font-size: 14px; font-weight: 600; padding: 9px 18px; border-radius: 999px; background: var(--mute-soft); color: var(--fg); }
+.dlg .acts button.go { background: var(--info); color: #fff; }
+@keyframes fadeIn { from { opacity: 0; } }
+@keyframes popIn { from { opacity: 0; transform: translateY(12px) scale(0.96); } }
 .toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); opacity: 0; pointer-events: none; background: var(--fg); color: var(--surface); padding: 10px 16px; border-radius: 12px; font-size: 13px; font-weight: 500; max-width: calc(100vw - 32px); transition: opacity 0.3s, transform 0.4s var(--ease); z-index: 50; }
 .toast.on { opacity: 1; transform: translate(-50%, 0); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; flex-basis: 100%; order: 5; }
@@ -603,6 +613,23 @@ h1 .w { display: inline-block; animation: rise 0.8s var(--ease) backwards; anima
     if (c === "tool_error") return "ClickUp refused that status: " + (e.message || "not valid for this task's list").slice(0, 120);
     return "Couldn't reach ClickUp. Nothing was changed; try again.";
   }
+  function confirmMove(r, from, to, ok) {
+    var scrim = el("div", "scrim"), d = el("div", "dlg"); d.setAttribute("role", "dialog"); d.setAttribute("aria-modal", "true");
+    d.appendChild(el("h3", null, "Change status in ClickUp?"));
+    d.appendChild(el("p", null, r.task || "Untitled task"));
+    var flow = el("div", "flow");
+    flow.appendChild(el("span", "pill " + kind(from), pretty(from))); flow.appendChild(el("span", null, "→")); flow.appendChild(el("span", "pill " + kind(to), pretty(to)));
+    d.appendChild(flow);
+    d.appendChild(el("p", null, "This updates the live task in ClickUp right away."));
+    var acts = el("div", "acts"), no = el("button", null, "Cancel"), yes = el("button", "go", "Change status");
+    no.type = yes.type = "button"; acts.appendChild(no); acts.appendChild(yes); d.appendChild(acts); scrim.appendChild(d); document.body.appendChild(scrim);
+    var close = function () { scrim.remove(); document.removeEventListener("keydown", key); };
+    var key = function (e) { if (e.key === "Escape") close(); };
+    document.addEventListener("keydown", key);
+    no.addEventListener("click", close); scrim.addEventListener("click", function (e) { if (e.target === scrim) close(); });
+    yes.addEventListener("click", function () { close(); ok(); });
+    yes.focus();
+  }
   function statusCell(r) {
     var cur = eff(r), id = taskId(r.url);
     if (!state.mcp || !id) return el("span", "pill " + kind(cur), pretty(cur));
@@ -610,13 +637,17 @@ h1 .w { display: inline-block; animation: rise 0.8s var(--ease) backwards; anima
     statusOptions(cur).forEach(function (o) { var op = el("option", null, o); op.value = o; if (o.toLowerCase() === String(cur).toLowerCase()) op.selected = true; sel.appendChild(op); });
     sel.addEventListener("change", function () {
       var next = sel.value, prev = cur;
-      sel.disabled = true;
+      sel.value = pretty(prev);
+      confirmMove(r, prev, next, function () { run(next, prev); });
+    });
+    function run(next, prev) {
+      sel.value = next; sel.disabled = true;
       state.mcp.callTool("ClickUp", "clickup_update_task", { task_id: id, status: next }).then(function () {
         state.over[r.url] = next; toast("Moved to " + next + " in ClickUp"); renderBody();
       }, function (e) {
         sel.disabled = false; sel.value = pretty(prev); toast(failMsg(e));
       });
-    });
+    }
     return sel;
   }
 
