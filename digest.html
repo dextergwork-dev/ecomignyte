@@ -1,0 +1,882 @@
+<title>Daily Task Digest</title>
+<style>
+/* Layout concept: Apple-style glass header, large title, summary tiles, one filterable table that becomes cards on phones. */
+:root {
+  --bg: #f5f5f7;
+  --surface: #ffffff;
+  --surface-2: #fbfbfd;
+  --fg: #1d1d1f;
+  --fg-2: #6e6e73;
+  --fg-3: #8e8e93;
+  --line: rgba(0, 0, 0, 0.08);
+  --glass: rgba(245, 245, 247, 0.72);
+  --accent: #0071e3;
+  --accent-soft: rgba(0, 113, 227, 0.1);
+  --good: #248a3d;
+  --good-soft: rgba(52, 199, 89, 0.14);
+  --warn: #b25000;
+  --warn-soft: rgba(255, 149, 0, 0.16);
+  --info: #5856d6;
+  --info-soft: rgba(88, 86, 214, 0.12);
+  --mute: #6e6e73;
+  --mute-soft: rgba(120, 120, 128, 0.14);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "Segoe UI", Roboto, Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #000000;
+    --surface: #1c1c1e;
+    --surface-2: #232326;
+    --fg: #f5f5f7;
+    --fg-2: #a1a1a6;
+    --fg-3: #8e8e93;
+    --line: rgba(255, 255, 255, 0.1);
+    --glass: rgba(0, 0, 0, 0.66);
+    --accent: #2997ff;
+    --accent-soft: rgba(41, 151, 255, 0.16);
+    --good: #32d74b;
+    --good-soft: rgba(50, 215, 75, 0.16);
+    --warn: #ff9f0a;
+    --warn-soft: rgba(255, 159, 10, 0.18);
+    --info: #8e8cff;
+    --info-soft: rgba(142, 140, 255, 0.18);
+    --mute: #a1a1a6;
+    --mute-soft: rgba(235, 235, 245, 0.14);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 8px 24px rgba(0, 0, 0, 0.4);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #000000;
+  --surface: #1c1c1e;
+  --surface-2: #232326;
+  --fg: #f5f5f7;
+  --fg-2: #a1a1a6;
+  --fg-3: #8e8e93;
+  --line: rgba(255, 255, 255, 0.1);
+  --glass: rgba(0, 0, 0, 0.66);
+  --accent: #2997ff;
+  --accent-soft: rgba(41, 151, 255, 0.16);
+  --good: #32d74b;
+  --good-soft: rgba(50, 215, 75, 0.16);
+  --warn: #ff9f0a;
+  --warn-soft: rgba(255, 159, 10, 0.18);
+  --info: #8e8cff;
+  --info-soft: rgba(142, 140, 255, 0.18);
+  --mute: #a1a1a6;
+  --mute-soft: rgba(235, 235, 245, 0.14);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 8px 24px rgba(0, 0, 0, 0.4);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { overflow-x: clip; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+  padding-inline: 16px;
+  padding-block: 0 56px;
+}
+a { color: inherit; }
+button, select, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+
+.wrap { max-width: 1560px; margin-inline: auto; }
+
+/* Glass bar */
+.bar {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 10;
+  margin-inline: -16px;
+  padding: 12px 16px;
+  background: var(--glass);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--line);
+}
+.bar-in { max-width: 1560px; margin-inline: auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.bar-title { font-weight: 600; font-size: 15px; letter-spacing: -0.015em; }
+.live { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--fg-2); }
+.pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--good); position: relative; }
+.pulse::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: var(--good); animation: ping 2.2s var(--ease) infinite; }
+@keyframes ping { 0% { transform: scale(1); opacity: 0.6; } 80%, 100% { transform: scale(3); opacity: 0; } }
+
+/* Hero */
+.hero { position: relative; padding-block: 40px 8px; will-change: transform, opacity; }
+.eyebrow { font-size: 13px; font-weight: 600; color: var(--accent); letter-spacing: 0.01em; }
+h1 { margin: 6px 0 0; font-size: clamp(34px, 6vw, 56px); line-height: 1.05; letter-spacing: -0.035em; font-weight: 700; text-wrap: balance; }
+.sub { margin: 12px 0 0; font-size: clamp(16px, 2vw, 19px); color: var(--fg-2); max-width: 60ch; text-wrap: pretty; }
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+/* Day pills */
+.days { display: flex; gap: 8px; overflow-x: auto; padding-block: 20px 4px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.days::-webkit-scrollbar { display: none; }
+.day {
+  flex: 0 0 auto; border: 0; cursor: pointer; background: var(--surface); color: var(--fg);
+  padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 500;
+  box-shadow: inset 0 0 0 1px var(--line);
+  transform: translate(var(--mx, 0px), var(--my, 0px)) scale(var(--s, 1));
+  transition: transform 0.4s var(--ease), background 0.25s, color 0.25s, box-shadow 0.25s;
+}
+.day:hover { --s: 1.05; }
+.day:active { --s: 0.95; }
+.day[aria-pressed="true"] { background: var(--fg); color: var(--bg); box-shadow: none; }
+.day small { color: var(--fg-3); font-weight: 500; margin-left: 6px; font-variant-numeric: tabular-nums; }
+.day[aria-pressed="true"] small { color: inherit; opacity: 0.6; }
+
+/* Stat tiles */
+.tiles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-top: 20px; }
+.tile {
+  background: var(--surface); border-radius: 20px; padding: 18px 18px 16px; box-shadow: var(--shadow);
+  position: relative; overflow: hidden; isolation: isolate;
+  animation: rise 0.7s var(--ease) backwards; animation-delay: calc(var(--i) * 70ms + 120ms);
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) scale(var(--s, 1));
+  transition: transform 0.6s var(--ease), box-shadow 0.4s;
+}
+.tile.hot { transition: transform 0.12s linear, box-shadow 0.4s; --s: 1.02; box-shadow: 0 2px 4px rgba(0,0,0,.06), 0 18px 40px rgba(0,0,0,.14); }
+.tile::before { content: ""; position: absolute; inset: 0; z-index: -1; opacity: 0; transition: opacity 0.4s; background: radial-gradient(260px circle at var(--px, 50%) var(--py, 50%), var(--accent-soft), transparent 70%); }
+.tile.hot::before { opacity: 1; }
+.tile .k { font-size: 12px; font-weight: 600; color: var(--fg-2); letter-spacing: 0.02em; text-transform: uppercase; }
+.tile .v { margin-top: 8px; font-size: clamp(32px, 4vw, 44px); font-weight: 700; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.tile .d { margin-top: 8px; font-size: 12px; color: var(--fg-3); }
+.tile.good .v { color: var(--good); }
+.tile.warn .v { color: var(--warn); }
+
+/* Toolbar */
+.tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 28px; }
+.search { position: relative; flex: 1 1 220px; min-width: 0; }
+.search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--fg-3); pointer-events: none; }
+.search input {
+  width: 100%; border: 0; background: var(--surface); border-radius: 12px; padding: 10px 12px 10px 36px;
+  box-shadow: inset 0 0 0 1px var(--line); transition: box-shadow 0.25s;
+}
+.search input:focus { outline: none; box-shadow: inset 0 0 0 2px var(--accent); }
+.seg { position: relative; display: inline-flex; background: var(--mute-soft); border-radius: 11px; padding: 3px; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.seg::-webkit-scrollbar { display: none; }
+.seg .thumb { position: absolute; top: 3px; bottom: 3px; left: 0; width: 0; border-radius: 8px; background: var(--surface); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.16); transition: transform 0.45s var(--ease), width 0.45s var(--ease); }
+.seg button { transform: translate(var(--mx, 0px), var(--my, 0px)); position: relative; z-index: 1; border: 0; background: none; cursor: pointer; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; color: var(--fg-2); white-space: nowrap; transition: color 0.25s, transform 0.4s var(--ease); }
+.seg button[aria-pressed="true"] { color: var(--fg); }
+.seg button i { font-style: normal; color: var(--fg-3); margin-left: 4px; font-variant-numeric: tabular-nums; }
+.select { border: 0; cursor: pointer; background: var(--surface); border-radius: 12px; padding: 9px 12px; box-shadow: inset 0 0 0 1px var(--line); max-width: 100%; }
+
+/* Table */
+.card { margin-top: 16px; background: var(--surface); border-radius: 22px; box-shadow: var(--shadow); overflow: hidden; }
+.scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+th:nth-child(1) { width: 14%; } th:nth-child(2) { width: 34%; } th:nth-child(3) { width: 13%; } th:nth-child(4) { width: 13%; } th:nth-child(5) { width: 13%; } th:nth-child(6) { width: 13%; }
+th { text-align: left; font-size: 12px; font-weight: 600; color: var(--fg-3); letter-spacing: 0.02em; text-transform: uppercase; padding: 14px 16px; background: var(--surface-2); border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 14px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tbody tr { animation: rise 0.5s var(--ease) backwards; animation-delay: calc(min(var(--i), 14) * 28ms); transition: background 0.25s; }
+tbody tr:hover { background: radial-gradient(420px circle at var(--px, 50%) var(--py, 50%), var(--accent-soft), transparent 75%); }
+tbody tr .task a { display: inline-block; transition: transform 0.4s var(--ease); }
+tbody tr:hover .task a { transform: translateX(4px); }
+tbody tr:last-child td { border-bottom: 0; }
+.client { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; white-space: nowrap; }
+.dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.type { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap; background: var(--mute-soft); color: var(--mute); }
+.type.main { background: var(--info-soft); color: var(--info); }
+.parent { color: var(--fg-2); font-size: 13px; max-width: 260px; }
+.task { min-width: 0; }
+.task a { text-decoration: none; font-weight: 500; background-image: linear-gradient(var(--accent), var(--accent)); background-size: 0 1px; background-position: 0 100%; background-repeat: no-repeat; transition: background-size 0.4s var(--ease), color 0.25s; }
+.task a:hover { color: var(--accent); background-size: 100% 1px; }
+.urgent { display: inline-block; margin-left: 6px; font-size: 11px; font-weight: 700; color: #ff453a; }
+.who { color: var(--fg-2); font-size: 14px; }
+.who.dim { color: var(--fg-3); font-size: 13px; }
+.tabs { margin-top: 28px; }
+.tools { margin-top: 14px; }
+.seg.lg button { padding: 8px 18px; font-size: 14px; }
+.tile.pick { cursor: pointer; }
+.tile.pick:active { --s: 0.98; }
+.tile.on { box-shadow: 0 0 0 2px var(--accent), var(--shadow); }
+.tile.info .v { color: var(--info); }
+.new { display: inline-block; margin-left: 8px; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; padding: 2px 7px; border-radius: 999px; background: var(--accent); color: #fff; vertical-align: 1px; animation: pop 0.6s var(--ease) both; }
+@keyframes pop { from { transform: scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }
+.pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; white-space: normal; text-align: center; }
+.pill.closed { background: var(--good-soft); color: var(--good); }
+.pill.approval { background: var(--warn-soft); color: var(--warn); }
+.pill.launch { background: var(--info-soft); color: var(--info); }
+.pill.other { background: var(--mute-soft); color: var(--mute); }
+.pill.todo { background: var(--mute-soft); color: var(--fg-2); }
+.pill.progress { background: var(--info-soft); color: var(--info); }
+.pill.qc { background: rgba(191, 90, 242, 0.16); color: #bf5af2; }
+.pill.hold { background: rgba(255, 69, 58, 0.14); color: #ff453a; }
+.stsel { appearance: none; -webkit-appearance: none; border: 0; cursor: pointer; font: inherit; font-size: 12px; font-weight: 600; padding: 4px 22px 4px 10px; border-radius: 999px; max-width: 100%; background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%); background-position: calc(100% - 12px) 55%, calc(100% - 8px) 55%; background-size: 4px 4px; background-repeat: no-repeat; transition: transform 0.3s var(--ease), opacity 0.2s; }
+.stsel:hover { transform: translateY(-1px); }
+.stsel:disabled { opacity: 0.55; cursor: progress; }
+.stsel option { color: initial; background: initial; }
+.scrim { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0, 0, 0, 0.38); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); animation: fadeIn 0.25s ease; }
+.dlg { width: min(420px, 100%); background: var(--surface); color: var(--fg); border-radius: 20px; padding: 24px; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35); animation: popIn 0.4s var(--ease); }
+.dlg h3 { margin: 0 0 8px; font-size: 18px; letter-spacing: -0.01em; }
+.dlg p { margin: 0 0 6px; font-size: 14px; color: var(--fg-2); line-height: 1.45; overflow-wrap: anywhere; }
+.dlg .flow { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 14px 0 6px; }
+.dlg .acts { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+.dlg .acts button { border: 0; cursor: pointer; font: inherit; font-size: 14px; font-weight: 600; padding: 9px 18px; border-radius: 999px; background: var(--mute-soft); color: var(--fg); }
+.dlg .acts button.go { background: var(--info); color: #fff; }
+@keyframes fadeIn { from { opacity: 0; } }
+@keyframes popIn { from { opacity: 0; transform: translateY(12px) scale(0.96); } }
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); opacity: 0; pointer-events: none; background: var(--fg); color: var(--surface); padding: 10px 16px; border-radius: 12px; font-size: 13px; font-weight: 500; max-width: calc(100vw - 32px); transition: opacity 0.3s, transform 0.4s var(--ease); z-index: 50; }
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; flex-basis: 100%; order: 5; }
+.chips button { border: 0; cursor: pointer; font-size: 13px; font-weight: 500; padding: 6px 12px; border-radius: 999px; background: var(--mute-soft); color: var(--fg-2); white-space: nowrap; transition: background 0.25s, color 0.25s, transform 0.3s var(--ease); }
+.chips button:hover { transform: translateY(-1px); }
+.chips button[aria-pressed="true"] { background: var(--fg); color: var(--bg, var(--surface)); }
+.chips button i { font-style: normal; opacity: 0.6; margin-left: 5px; font-variant-numeric: tabular-nums; }
+.when { color: var(--fg-2); font-size: 13px; font-variant-numeric: tabular-nums; }
+.when b { display: block; color: var(--fg); font-weight: 500; }
+
+.empty { padding: 64px 24px; text-align: center; color: var(--fg-2); }
+.empty h2 { margin: 0 0 6px; color: var(--fg); font-size: 22px; letter-spacing: -0.02em; }
+.empty p { margin: 0 auto; max-width: 44ch; }
+.foot { margin-top: 20px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--fg-3); }
+.foot span { font-variant-numeric: tabular-nums; }
+
+/* Skeleton */
+.sk { height: 14px; border-radius: 7px; background: linear-gradient(90deg, var(--mute-soft) 25%, var(--line) 50%, var(--mute-soft) 75%); background-size: 200% 100%; animation: shimmer 1.4s linear infinite; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+
+/* Created groups */
+.groups { display: block; }
+.gcols, .gh { display: grid; grid-template-columns: 36px 150px minmax(0, 1fr) 130px 160px 190px; gap: 12px; align-items: start; padding: 14px 16px; }
+.gcols { background: var(--surface-2); border-bottom: 1px solid var(--line); font-size: 12px; font-weight: 600; color: var(--fg-3); letter-spacing: 0.02em; text-transform: uppercase; align-items: center; }
+.grp { border-bottom: 1px solid var(--line); animation: rise 0.5s var(--ease) backwards; animation-delay: calc(min(var(--i), 10) * 40ms); }
+.grp:last-child { border-bottom: 0; }
+.gh { cursor: pointer; transition: background 0.25s; outline-offset: -2px; }
+.gh:hover { background: radial-gradient(420px circle at var(--px, 50%) var(--py, 50%), var(--accent-soft), transparent 75%); }
+.chev { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--mute-soft); color: var(--fg-2); transition: transform 0.5s var(--ease), background 0.3s, color 0.3s; }
+.chev svg { width: 14px; height: 14px; }
+.gh:hover .chev { background: var(--accent-soft); color: var(--accent); }
+.grp.open .chev { transform: rotate(90deg); background: var(--accent); color: #fff; }
+.gh .task { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; }
+.gh .task a, .srow .task a { overflow-wrap: anywhere; }
+.chip { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--mute-soft); color: var(--mute); }
+.new.inline { margin-left: 0; }
+.count { flex-basis: 100%; font-size: 12px; color: var(--fg-3); }
+.gp { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.55s var(--ease); }
+.gp > div { overflow: hidden; min-height: 0; }
+.grp.open .gp { grid-template-rows: 1fr; }
+.subs { margin: 0 16px 16px 52px; border-radius: 16px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); overflow: hidden; opacity: 0; transform: translateY(-8px); transition: opacity 0.4s, transform 0.55s var(--ease); }
+.grp.open .subs { opacity: 1; transform: none; }
+.srow { display: grid; grid-template-columns: minmax(0, 1fr) 120px 160px 150px 190px; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--line); align-items: start; }
+.srow:first-child { border-top: 0; }
+.srow.shead { font-size: 11px; font-weight: 600; color: var(--fg-3); letter-spacing: 0.03em; text-transform: uppercase; padding-block: 10px; }
+.grp.open .srow:not(.shead) { animation: rise 0.45s var(--ease) backwards; animation-delay: calc(var(--k) * 45ms + 120ms); }
+.via { display: block; font-size: 12px; color: var(--fg-3); margin-top: 2px; }
+.due { display: block; font-size: 13px; color: var(--fg-2); font-variant-numeric: tabular-nums; }
+.due b { display: block; font-weight: 500; color: var(--fg); }
+.due em { font-style: normal; font-size: 12px; color: var(--fg-3); }
+.due em.late { color: #ff453a; font-weight: 600; }
+.due.dim { color: var(--fg-3); }
+@media (max-width: 860px) {
+  .groups { overflow: visible; }
+  .gcols { display: none; }
+  .gh { min-width: 0; grid-template-columns: 36px 1fr; gap: 6px 10px; }
+  .gh > :nth-child(n+2) { grid-column: 2; }
+  .subs { margin-left: 16px; }
+  .srow { min-width: 0; grid-template-columns: 1fr 1fr; }
+  .srow.shead { display: none; }
+  .srow .task { grid-column: 1 / -1; }
+  .srow > [data-l]::before { content: attr(data-l); display: block; font-size: 10px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--fg-3); }
+}
+
+.tline { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.tline a { overflow-wrap: anywhere; }
+td.task .parent { margin-top: 4px; max-width: none; font-size: 12px; color: var(--fg-3); overflow-wrap: anywhere; }
+.by { display: block; font-size: 12px; color: var(--fg-3); margin-top: 2px; white-space: normal; }
+.by.dim { opacity: 0.8; }
+.when .new { margin-left: 6px; }
+td, th { overflow-wrap: anywhere; }
+.notice { display: flex; align-items: center; gap: 10px; margin-top: 16px; padding: 12px 16px; border-radius: 14px; background: var(--warn-soft); color: var(--warn); font-size: 14px; font-weight: 500; animation: rise 0.5s var(--ease) backwards; }
+.notice[hidden] { display: none; }
+.notice i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: none; }
+@media (max-width: 1000px) {
+  .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .gcols, .gh { grid-template-columns: 36px 120px minmax(0, 1fr) 120px 130px 150px; gap: 10px; }
+  .srow { grid-template-columns: minmax(0, 1fr) 110px 130px 130px 150px; }
+}
+
+/* Pointer motion */
+.field { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 0.6s; background: radial-gradient(520px circle at var(--cx, 50%) var(--cy, 30%), var(--accent-soft), transparent 65%); }
+.fine .field { opacity: 1; }
+.wrap, .bar { position: relative; z-index: 1; }
+.bar { position: sticky; z-index: 10; transition: box-shadow 0.4s, background 0.4s; }
+.bar.scrolled { box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08); }
+.aurora { position: absolute; inset: -40px -10% auto -10%; height: 340px; z-index: -1; pointer-events: none; filter: blur(70px); opacity: 0.55; }
+.aurora i { position: absolute; border-radius: 50%; translate: calc(var(--ax, 0) * var(--d, 30px)) calc(var(--ay, 0) * var(--d, 30px)); transition: translate 0.9s var(--ease); animation: drift 14s ease-in-out infinite alternate; }
+.aurora i:nth-child(1) { width: 340px; height: 260px; left: 8%; top: 10px; background: var(--accent); --d: 46px; opacity: 0.5; }
+.aurora i:nth-child(2) { width: 300px; height: 240px; left: 44%; top: 50px; background: var(--info); --d: -38px; animation-duration: 18s; opacity: 0.45; }
+.aurora i:nth-child(3) { width: 260px; height: 220px; left: 70%; top: 0; background: var(--good); --d: 26px; animation-duration: 22s; opacity: 0.32; }
+@keyframes drift { from { transform: translate(0, 0) scale(1); } to { transform: translate(36px, 24px) scale(1.12); } }
+h1 .w { display: inline-block; animation: rise 0.8s var(--ease) backwards; animation-delay: calc(var(--k) * 70ms + 80ms); }
+.eyebrow, .sub, .stamp { animation: rise 0.8s var(--ease) backwards; }
+.stamp { display: inline-flex; align-items: center; gap: 10px; margin-top: 14px; padding: 7px 14px 7px 12px; border-radius: 999px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); font-size: 13px; color: var(--fg-2); animation-delay: 0.3s; }
+.stamp[hidden] { display: none; }
+.stamp b { color: var(--fg); font-weight: 600; }
+.stamp.old .pulse, .stamp.old .pulse::after { background: var(--warn); }
+.sub { animation-delay: 0.45s; }
+@media (prefers-reduced-motion: reduce) { .aurora i { animation: none; } .field { display: none; } }
+
+@media (max-width: 880px) {
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 860px) {
+  .scroll { overflow: visible; }
+  table, tbody, tr, td { display: block; min-width: 0; }
+  table { min-width: 0; }
+  thead { display: none; }
+  tbody tr { padding: 16px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
+  tbody tr:last-child { border-bottom: 0; }
+  td { padding: 0; border: 0; }
+  td[data-l]::before { content: attr(data-l); display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--fg-3); margin-bottom: 2px; }
+  td.c-task::before, td.c-client::before { display: none; }
+  th:nth-child(n) { width: auto; }
+  .task { min-width: 0; font-size: 16px; }
+  .parent { max-width: none; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; animation-delay: 0ms !important; transition-duration: 0.001ms !important; }
+}
+</style>
+
+<div class="field" aria-hidden="true"></div>
+<div class="bar" id="bar"><div class="bar-in">
+  <span class="bar-title">Task Movement</span>
+  <span class="live"><span class="pulse"></span><span id="liveTxt">Updates daily at 9:45 AM ET</span></span>
+</div></div>
+
+<div class="wrap">
+  <header class="hero" id="hero">
+    <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="eyebrow" id="eyebrow">ClickUp · Daily digest</div>
+    <h1 id="h1">Closed and added since yesterday</h1>
+    <div class="stamp" id="stamp" hidden><span class="pulse"></span><span id="stampTxt"></span></div>
+    <p class="sub" id="sub">Tasks closed or sent for approval across every client, refreshed each morning.</p>
+  </header>
+
+  <div class="notice" id="notice" role="status" hidden><i></i><span id="noticeTxt"></span></div>
+
+  <div class="days" id="days" role="group" aria-label="Report date"></div>
+
+  <section class="tiles" id="tiles" aria-label="Summary"></section>
+
+  <div class="tabs"><div class="seg lg" id="tabSeg" role="group" aria-label="View"><span class="thumb"></span></div></div>
+
+  <div class="tools">
+    <label class="search"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="9" r="6"/><path d="m14 14 4 4"/></svg>
+      <input id="q" type="search" placeholder="Search tasks, parents, people" autocomplete="off"></label>
+    <div class="chips" id="statusSeg" role="group" aria-label="Status"></div>
+    <select class="select" id="clientSel" aria-label="Client"></select>
+    <select class="select" id="assigneeSel" aria-label="Assignee"></select>
+    <div class="seg" id="sortSeg" role="group" aria-label="Sort"><span class="thumb"></span></div>
+  </div>
+
+  <div class="card"><div class="scroll" id="tableHost"></div></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="foot"><span id="gen"></span><span>Source: ClickUp · times in Eastern</span></div>
+</div>
+
+<script>
+(function () {
+  var TZ = "America/New_York";
+  var PALETTE = ["#0a84ff", "#30d158", "#ff9f0a", "#bf5af2", "#ff375f", "#64d2ff", "#ffd60a", "#ac8e68", "#5e5ce6", "#66d4cf"];
+    var SORTS = [["client", "Client"], ["created", "Newest created"], ["new", "Last moved"]];
+  var DAY = 86400000;
+  var TABS = [["moved", "Closed or approved"], ["created", "Added"]];
+  var ORDER = ["to do", "in progress", "qc review", "qc feedback", "revisions needed", "on hold", "ready to launch", "recurring", "on going", "done - approval", "closed"];
+  var state = { reports: [], date: null, tab: "moved", q: "", statuses: {}, snap: null, mcp: null, over: {}, client: "all", assignee: "all", sort: "client", loaded: false, open: {} };
+  function people(str) { return String(str || "").split(/,\s*/).filter(Boolean); }
+  function hasPerson(x) { return state.assignee === "all" || people(x.assignee).indexOf(state.assignee) > -1; }
+  function isOpen(gp) { return state.open[gp.url] !== undefined ? state.open[gp.url] : state.assignee !== "all"; }
+  function eff(r) { return (r.url && state.over[r.url]) || r.status; }
+  function skey(r) { return String(eff(r) || "").toLowerCase(); }
+  function statusOk(r) { var k = Object.keys(state.statuses); return !k.length || !!state.statuses[skey(r)]; }
+  function listFor(report) { if (state.tab === "all") return (state.snap && state.snap.rows) || []; return report ? (state.tab === "created" ? (report.createdGroups || []) : (report.rows || [])) : []; }
+  function flat(groups) { var a = []; groups.forEach(function (gp) { a.push(gp); (gp.subtasks || []).forEach(function (x) { a.push(x); }); }); return a; }
+  function createdTotal(report) { var t = 0; ((report && report.createdGroups) || []).forEach(function (gp) { t += (gp.isNew ? 1 : 0) + (gp.subtasks || []).length; }); return t; }
+  var $ = function (id) { return document.getElementById(id); };
+  var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+  function hash(s) { var h = 0; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; }
+  function colorFor(name) { return PALETTE[hash(name) % PALETTE.length]; }
+  function kind(status) {
+    var s = String(status || "").toLowerCase();
+    if (s === "closed") return "closed";
+    if (s.indexOf("approval") > -1) return "approval";
+    if (s.indexOf("launch") > -1) return "launch";
+    if (s === "to do") return "todo";
+    if (s === "in progress") return "progress";
+    if (s.indexOf("qc") > -1 || s.indexOf("review") > -1 || s.indexOf("revision") > -1) return "qc";
+    if (s.indexOf("hold") > -1) return "hold";
+    return "other";
+  }
+  function pretty(status) {
+    var s = String(status || "");
+    if (s && s.charAt(0) === s.charAt(0).toUpperCase()) return s;
+    return s.replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+  }
+  function fmt(ts, opts) { return new Intl.DateTimeFormat("en-US", Object.assign({ timeZone: TZ }, opts)).format(new Date(ts)); }
+  function dayLabel(ts) { return fmt(ts, { weekday: "short", month: "short", day: "numeric" }); }
+  function timeLabel(ts) { return fmt(ts, { hour: "numeric", minute: "2-digit" }); }
+
+  function current() {
+    for (var i = 0; i < state.reports.length; i++) if (state.reports[i].date === state.date) return state.reports[i];
+    return null;
+  }
+
+  /* count-up */
+  function countTo(node, to) {
+    if (reduce || to === 0) { node.textContent = String(to); return; }
+    var start = performance.now(), dur = 900;
+    function step(now) {
+      var t = Math.min(1, (now - start) / dur), e = 1 - Math.pow(1 - t, 4);
+      node.textContent = String(Math.round(to * e));
+      if (t < 1) requestAnimationFrame(step);
+    }
+    node.textContent = "0";
+    requestAnimationFrame(step);
+  }
+
+  function placeThumb(seg) {
+    var on = seg.querySelector('button[aria-pressed="true"]'), th = seg.querySelector(".thumb");
+    if (!on || !th) return;
+    th.style.width = on.offsetWidth + "px";
+    th.style.transform = "translateX(" + on.offsetLeft + "px)";
+  }
+
+  function buildSeg(host, items, key, counts) {
+    Array.prototype.slice.call(host.querySelectorAll("button")).forEach(function (b) { b.remove(); });
+    items.forEach(function (it) {
+      var b = el("button", null, it[1]);
+      b.type = "button";
+      if (counts && counts[it[0]] != null) b.appendChild(el("i", null, String(counts[it[0]])));
+      b.setAttribute("aria-pressed", String(state[key] === it[0]));
+      b.addEventListener("click", function () {
+        state[key] = it[0];
+        if (key === "tab") { state.statuses = {}; state.client = "all"; renderAll(); } else renderBody();
+      });
+      host.appendChild(b);
+    });
+    placeThumb(host);
+  }
+
+  function buildChips(all) {
+    var host = $("statusSeg"), counts = {}, label = {};
+    all.forEach(function (r) { var k = skey(r); counts[k] = (counts[k] || 0) + 1; label[k] = pretty(r.status); });
+    var keys = Object.keys(counts).sort(function (a, b) { var i = ORDER.indexOf(a), j = ORDER.indexOf(b); if (i < 0) i = 99; if (j < 0) j = 99; return i - j || a.localeCompare(b); });
+    Object.keys(state.statuses).forEach(function (k) { if (!counts[k]) delete state.statuses[k]; });
+    host.textContent = "";
+    keys.forEach(function (k) {
+      var b = el("button", null, label[k]); b.type = "button"; b.appendChild(el("i", null, String(counts[k])));
+      b.setAttribute("aria-pressed", String(!!state.statuses[k]));
+      b.addEventListener("click", function () { if (state.statuses[k]) delete state.statuses[k]; else state.statuses[k] = 1; renderBody(); });
+      host.appendChild(b);
+    });
+  }
+
+  function renderDays() {
+    var host = $("days");
+    host.textContent = "";
+    state.reports.forEach(function (r) {
+      var b = el("button", "day", r.pillLabel || dayLabel(r.windowEnd || Date.parse(r.date + "T12:00:00Z")));
+      b.type = "button";
+      b.appendChild(el("small", null, String((r.rows || []).length)));
+      b.setAttribute("aria-pressed", String(r.date === state.date));
+      b.addEventListener("click", function () { state.date = r.date; state.client = "all"; renderAll(); });
+      host.appendChild(b);
+    });
+  }
+
+  function renderTiles(report) {
+    var host = $("tiles");
+    var rows = report.rows || [], groups = report.createdGroups || [];
+    var closed = rows.filter(function (r) { return kind(r.status) === "closed"; }).length;
+    var appr = rows.filter(function (r) { return kind(r.status) === "approval"; }).length;
+    var clients = {}; rows.concat(groups).forEach(function (r) { clients[r.client] = 1; });
+    var made = createdTotal(report), newMain = groups.filter(function (gp) { return gp.isNew; }).length;
+    var data = [
+      ["Moved", rows.length, "", "Closed or sent for approval", "moved"],
+      ["Closed", closed, "good", "Finished and archived", "moved"],
+      ["Done - Approval", appr, "warn", "Waiting on countercheck", "moved"],
+      ["Created", made, "info", newMain + " new main · " + groups.length + " mains touched", "created"],
+      ["Clients", Object.keys(clients).length, "", "With activity", null]
+    ];
+    host.textContent = "";
+    data.forEach(function (d, i) {
+      var t = el("div", "tile " + d[2] + (d[4] ? " pick" : "")); t.style.setProperty("--i", i);
+      if (d[4]) {
+        t.tabIndex = 0; t.setAttribute("role", "button");
+        if (d[4] === state.tab && (d[0] === "Moved" || d[0] === "Created")) t.classList.add("on");
+        var go = function () { state.tab = d[4]; state.statuses = d[0] === "Closed" ? { "closed": 1 } : d[0] === "Done - Approval" ? { "done - approval": 1 } : {}; renderAll(); };
+        t.addEventListener("click", go);
+        t.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+      }
+      t.appendChild(el("div", "k", d[0]));
+      var v = el("div", "v", "0"); t.appendChild(v);
+      t.appendChild(el("div", "d", d[3]));
+      host.appendChild(t);
+      countTo(v, d[1]);
+    });
+  }
+
+  function renderTable(rows) {
+    var host = $("tableHost");
+    host.textContent = "";
+    if (!state.loaded) {
+      var s = el("div", "empty");
+      for (var i = 0; i < 5; i++) { var l = el("div", "sk"); l.style.margin = "18px auto"; l.style.width = (80 - i * 8) + "%"; s.appendChild(l); }
+      host.appendChild(s); return;
+    }
+    if (!state.reports.length) {
+      var e = el("div", "empty");
+      e.appendChild(el("h2", null, "Your first digest lands at 9:45 AM ET"));
+      e.appendChild(el("p", null, "Every morning this page fills with the tasks that moved in ClickUp between 10:00 AM the day before and 9:40 AM."));
+      host.appendChild(e); return;
+    }
+    if (!rows.length) {
+      var e2 = el("div", "empty");
+      var none = listFor(current()).length === 0;
+      if (state.tab === "all" && none) { e2.appendChild(el("h2", null, "The task list is not loaded yet")); e2.appendChild(el("p", null, "The full list of open tasks appears here after the next daily refresh.")); host.appendChild(e2); return; }
+      e2.appendChild(el("h2", null, none ? (state.tab === "created" ? "No new tasks in this report" : "Nothing moved in this report") : "Nothing matches"));
+      e2.appendChild(el("p", null, none ? "Reports from the daily refresh list every task created or moved from 10:00 AM the day before to 9:40 AM ET." : "Try a different status, client or search."));
+      host.appendChild(e2); return;
+    }
+    if (state.tab === "created") { renderGroups(rows, host); return; }
+    var isAll = state.tab === "all";
+    var table = el("table");
+    var head = el("thead"), hr = el("tr");
+    (isAll ? ["Client", "Task", "Assignee", "Status", "Due date", "Last updated"] : ["Client", "Task", "Assignee", "Status", "Created", "Closed / moved"]).forEach(function (h) { hr.appendChild(el("th", null, h)); });
+    head.appendChild(hr); table.appendChild(head);
+    var body = el("tbody");
+    var ref = (current() && (current().windowEnd || current().generatedAt)) || Date.now();
+    rows.forEach(function (r, i) {
+      var tr = el("tr"); tr.style.setProperty("--i", i);
+      var c1 = el("td", "c-client"); var cl = el("span", "client"); var dot = el("span", "dot"); dot.style.background = colorFor(r.client || "?");
+      cl.appendChild(dot); cl.appendChild(document.createTextNode(r.client || "Unassigned client")); c1.appendChild(cl);
+      var c2 = el("td", "task c-task");
+      var line = el("div", "tline"); var a = el("a", null, r.task || "Untitled"); if (r.url) { a.href = r.url; a.target = "_blank"; a.rel = "noopener noreferrer"; }
+      line.appendChild(a); if (r.urgent) line.appendChild(el("span", "urgent", "URGENT"));
+      line.appendChild(el("span", "type " + (r.type === "Main" ? "main" : ""), r.type || ""));
+      c2.appendChild(line);
+      if (r.parent && r.parent !== "None") c2.appendChild(el("div", "parent", "Under " + r.parent));
+      var c3 = el("td", "who", r.assignee || "Unassigned"); c3.setAttribute("data-l", "Assignee");
+      var c4 = el("td"); c4.setAttribute("data-l", "Status"); c4.appendChild(statusCell(r));
+      var c5 = el("td", "when"); c5.setAttribute("data-l", isAll ? "Due date" : "Created");
+      if (isAll) {
+        if (r.due) { var dc = dueCell(r.due, Date.now()); c5.appendChild(dc); } else c5.appendChild(el("span", "dim", "No due date"));
+        if (r.priority) c5.appendChild(el("span", "by", r.priority.charAt(0).toUpperCase() + r.priority.slice(1) + " priority"));
+      } else if (r.created) {
+        var age = Math.max(0, Math.floor((ref - r.created) / DAY));
+        c5.appendChild(el("b", null, dayLabel(r.created) + ", " + fmt(r.created, { year: "numeric" })));
+        c5.appendChild(document.createTextNode(age === 0 ? "Today" : age === 1 ? "1 day ago" : age + " days ago"));
+        if (ref - r.created <= 2 * DAY) c5.appendChild(el("span", "new", "NEW"));
+      } else c5.textContent = "Not recorded";
+      if (!isAll) c5.appendChild(el("span", "by", "by " + (r.creator || "not recorded")));
+      var c6 = el("td", "when"); c6.setAttribute("data-l", isAll ? "Last updated" : "Closed / moved");
+      var mv = isAll ? r.updated : r.ts;
+      if (mv) { c6.appendChild(el("b", null, dayLabel(mv))); c6.appendChild(document.createTextNode(timeLabel(mv))); } else c6.textContent = "Not recorded";
+      if (!isAll) {
+        var by = el("span", "by" + (r.closedBy ? "" : " dim"), r.closedBy ? "by " + r.closedBy : "by not tracked");
+        if (!r.closedBy) by.title = "ClickUp does not report who changed a status through its API.";
+        c6.appendChild(by);
+      }
+      [c1, c2, c3, c4, c5, c6].forEach(function (c) { tr.appendChild(c); });
+      body.appendChild(tr);
+    });
+    table.appendChild(body); host.appendChild(table);
+  }
+
+  var toastT = 0;
+  function toast(msg) { var t = $("toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove("on"); }, 4200); }
+  function taskId(url) { var m = /\/t\/([^/?#]+)/.exec(url || ""); return m ? m[1] : null; }
+  function statusOptions(cur) {
+    var seen = {}, out = [];
+    var add = function (v) { var k = String(v || "").toLowerCase(); if (k && !seen[k]) { seen[k] = 1; out.push(pretty(v)); } };
+    add(cur);
+    ((state.snap && state.snap.rows) || []).forEach(function (r) { add(r.status); });
+    ORDER.forEach(add);
+    return out;
+  }
+  function failMsg(e) {
+    var c = e && e.code;
+    if (c === "needs_reauth" || c === "server_not_connected" || c === "selection_required") return "ClickUp isn't connected. Connect it in claude.ai Settings → Connectors, then reload.";
+    if (c === "not_in_manifest" || c === "consent_required" || c === "approval_required") return "You didn't allow this page to edit ClickUp.";
+    if (c === "tool_error") return "ClickUp refused that status: " + (e.message || "not valid for this task's list").slice(0, 120);
+    return "Couldn't reach ClickUp. Nothing was changed; try again.";
+  }
+  function confirmMove(r, from, to, ok) {
+    var scrim = el("div", "scrim"), d = el("div", "dlg"); d.setAttribute("role", "dialog"); d.setAttribute("aria-modal", "true");
+    d.appendChild(el("h3", null, "Change status in ClickUp?"));
+    d.appendChild(el("p", null, r.task || "Untitled task"));
+    var flow = el("div", "flow");
+    flow.appendChild(el("span", "pill " + kind(from), pretty(from))); flow.appendChild(el("span", null, "→")); flow.appendChild(el("span", "pill " + kind(to), pretty(to)));
+    d.appendChild(flow);
+    d.appendChild(el("p", null, "This updates the live task in ClickUp right away."));
+    var acts = el("div", "acts"), no = el("button", null, "Cancel"), yes = el("button", "go", "Change status");
+    no.type = yes.type = "button"; acts.appendChild(no); acts.appendChild(yes); d.appendChild(acts); scrim.appendChild(d); document.body.appendChild(scrim);
+    var close = function () { scrim.remove(); document.removeEventListener("keydown", key); };
+    var key = function (e) { if (e.key === "Escape") close(); };
+    document.addEventListener("keydown", key);
+    no.addEventListener("click", close); scrim.addEventListener("click", function (e) { if (e.target === scrim) close(); });
+    yes.addEventListener("click", function () { close(); ok(); });
+    yes.focus();
+  }
+  function statusCell(r) {
+    var cur = eff(r), id = taskId(r.url);
+    if (!state.mcp || !id) return el("span", "pill " + kind(cur), pretty(cur));
+    var sel = el("select", "stsel pill " + kind(cur)); sel.setAttribute("aria-label", "Change status in ClickUp");
+    statusOptions(cur).forEach(function (o) { var op = el("option", null, o); op.value = o; if (o.toLowerCase() === String(cur).toLowerCase()) op.selected = true; sel.appendChild(op); });
+    sel.addEventListener("change", function () {
+      var next = sel.value, prev = cur;
+      sel.value = pretty(prev);
+      confirmMove(r, prev, next, function () { run(next, prev); });
+    });
+    function run(next, prev) {
+      sel.value = next; sel.disabled = true;
+      state.mcp.callTool("ClickUp", "clickup_update_task", { task_id: id, status: next }).then(function () {
+        state.over[r.url] = next; toast("Moved to " + next + " in ClickUp"); renderBody();
+      }, function (e) {
+        sel.disabled = false; sel.value = pretty(prev); toast(failMsg(e));
+      });
+    }
+    return sel;
+  }
+
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function chevron() {
+    var svg = document.createElementNS(SVGNS, "svg"); svg.setAttribute("viewBox", "0 0 20 20"); svg.setAttribute("aria-hidden", "true");
+    var p = document.createElementNS(SVGNS, "path"); p.setAttribute("d", "m7 4 6 6-6 6"); p.setAttribute("fill", "none"); p.setAttribute("stroke", "currentColor"); p.setAttribute("stroke-width", "2"); p.setAttribute("stroke-linecap", "round"); p.setAttribute("stroke-linejoin", "round");
+    svg.appendChild(p); return svg;
+  }
+  function dueCell(due, ref) {
+    var c = el("span", "due");
+    if (!due) { c.textContent = "No due date"; c.classList.add("dim"); return c; }
+    c.appendChild(el("b", null, dayLabel(due)));
+    var key = function (t) { var q = fmt(t, { year: "numeric", month: "2-digit", day: "2-digit" }).split("/"); return Date.UTC(+q[2], +q[0] - 1, +q[1]); };
+    var d = Math.round((key(due) - key(ref)) / DAY);
+    var t = d < 0 ? "Overdue" : d === 0 ? "Due today" : d === 1 ? "Due tomorrow" : "In " + d + " days";
+    var sm = el("em", d < 0 ? "late" : null, t); c.appendChild(sm); return c;
+  }
+  function renderGroups(list, host) {
+    var report = current(), ref = (report && (report.windowEnd || report.generatedAt)) || Date.now();
+    var wrap = el("div", "groups");
+    var cols = el("div", "gcols");
+    ["", "Client", "Main task", "Status", "Assignee", "Created"].forEach(function (h) { cols.appendChild(el("span", null, h)); });
+    wrap.appendChild(cols);
+    list.forEach(function (gp, i) {
+      var open = isOpen(gp);
+      var grp = el("div", "grp" + (open ? " open" : "")); grp.style.setProperty("--i", i);
+      var head = el("div", "gh"); head.tabIndex = 0; head.setAttribute("role", "button"); head.setAttribute("aria-expanded", String(open));
+      var subs = gp.subtasks || [];
+      var chev = el("span", "chev"); chev.appendChild(chevron()); head.appendChild(chev);
+      var c1 = el("span", "client"); var dot = el("span", "dot"); dot.style.background = colorFor(gp.client || "?"); c1.appendChild(dot); c1.appendChild(document.createTextNode(gp.client || "Unassigned client")); head.appendChild(c1);
+      var c2 = el("span", "task"); var a = el("a", null, gp.task); if (gp.url) { a.href = gp.url; a.target = "_blank"; a.rel = "noopener noreferrer"; a.addEventListener("click", function (ev) { ev.stopPropagation(); }); }
+      c2.appendChild(a);
+      c2.appendChild(el("span", gp.isNew ? "new inline" : "chip", gp.isNew ? "NEW" : "Existing task"));
+      c2.appendChild(el("span", "count", subs.length + (subs.length === 1 ? " new subtask" : " new subtasks")));
+      head.appendChild(c2);
+      var c3 = el("span"); c3.appendChild(el("span", "pill " + kind(gp.status), pretty(gp.status))); head.appendChild(c3);
+      head.appendChild(el("span", "who", gp.assignee || "Unassigned"));
+      var c5 = el("span", "when");
+      if (gp.created) { c5.appendChild(el("b", null, dayLabel(gp.created))); c5.appendChild(document.createTextNode(gp.isNew ? timeLabel(gp.created) : "Task created earlier")); } else c5.textContent = "Not recorded";
+      c5.appendChild(el("span", "by", "by " + (gp.creator || "not recorded")));
+      head.appendChild(c5);
+      var panel = el("div", "gp"); var inner = el("div"); var box = el("div", "subs");
+      var sh = el("div", "srow shead"); ["Subtask", "Status", "Assignee", "Due date", "Created"].forEach(function (h) { sh.appendChild(el("span", null, h)); }); box.appendChild(sh);
+      subs.slice().sort(function (x, y) { return (y.created || 0) - (x.created || 0); }).forEach(function (x, k) {
+        var row = el("div", "srow"); row.style.setProperty("--k", k);
+        var n = el("span", "task"); var l = el("a", null, x.task); if (x.url) { l.href = x.url; l.target = "_blank"; l.rel = "noopener noreferrer"; } n.appendChild(l);
+        if (x.via) n.appendChild(el("span", "via", "in " + x.via));
+        row.appendChild(n);
+        var st = el("span"); st.setAttribute("data-l", "Status"); st.appendChild(el("span", "pill " + kind(x.status), pretty(x.status))); row.appendChild(st);
+        var as = el("span", "who", x.assignee || "Unassigned"); as.setAttribute("data-l", "Assignee"); row.appendChild(as);
+        var du = dueCell(x.due, ref); du.setAttribute("data-l", "Due date"); row.appendChild(du);
+        var cr = el("span", "when"); cr.setAttribute("data-l", "Created"); if (x.created) { cr.appendChild(el("b", null, dayLabel(x.created))); cr.appendChild(document.createTextNode(timeLabel(x.created))); cr.appendChild(el("span", "by", "by " + (x.creator || "not recorded"))); } row.appendChild(cr);
+        box.appendChild(row);
+      });
+      inner.appendChild(box); panel.appendChild(inner);
+      var toggle = function () { var on = !isOpen(gp); state.open[gp.url] = on; grp.classList.toggle("open", on); head.setAttribute("aria-expanded", String(on)); };
+      head.addEventListener("click", toggle);
+      head.addEventListener("keydown", function (e) { if ((e.key === "Enter" || e.key === " ") && e.target === head) { e.preventDefault(); toggle(); } });
+      grp.appendChild(head); grp.appendChild(panel); wrap.appendChild(grp);
+    });
+    host.appendChild(wrap);
+  }
+
+  function filtered(report) {
+    var rows = listFor(report).slice();
+    var q = state.q.trim().toLowerCase();
+    if (state.tab === "created") {
+      var newest = function (gp) { var m = gp.created || 0; (gp.subtasks || []).forEach(function (x) { if ((x.created || 0) > m) m = x.created; }); return m; };
+      if (state.assignee !== "all") rows = rows.map(function (gp) { var subs = (gp.subtasks || []).filter(hasPerson); return (hasPerson(gp) || subs.length) ? Object.assign({}, gp, { subtasks: subs }) : null; }).filter(Boolean);
+      rows = rows.filter(function (gp) {
+        var items = [gp].concat(gp.subtasks || []);
+        if (state.client !== "all" && gp.client !== state.client) return false;
+        if (!items.some(statusOk)) return false;
+        if (q) { var hay = gp.client + " " + items.map(function (r) { return [r.task, r.assignee, r.creator, r.status].join(" "); }).join(" "); if (hay.toLowerCase().indexOf(q) < 0) return false; }
+        return true;
+      });
+      rows.sort(function (a, b) { if (state.sort === "client") { var c = String(a.client).localeCompare(String(b.client)); if (c) return c; } return newest(b) - newest(a); });
+      return rows;
+    }
+    rows = rows.filter(function (r) {
+      if (!statusOk(r)) return false;
+      if (state.client !== "all" && r.client !== state.client) return false;
+      if (!hasPerson(r)) return false;
+      if (q) { var hay = [r.client, r.task, r.parent, r.assignee, r.creator, r.closedBy, r.status, r.priority].join(" ").toLowerCase(); if (hay.indexOf(q) < 0) return false; }
+      return true;
+    });
+    rows.sort(function (a, b) {
+      if (state.sort === "client") { var c = String(a.client).localeCompare(String(b.client)); if (c) return c; return (b.ts || b.updated || b.created || 0) - (a.ts || a.updated || a.created || 0); }
+      if (state.sort === "created") return (b.created || b.updated || 0) - (a.created || a.updated || 0);
+      return (b.ts || b.updated || b.created || 0) - (a.ts || a.updated || a.created || 0);
+    });
+    return rows;
+  }
+
+  function renderBody() {
+    var report = current();
+    var all = state.tab === "created" ? flat(listFor(report)) : listFor(report);
+    var tabCounts = { moved: ((report && report.rows) || []).length, created: createdTotal(report), all: ((state.snap && state.snap.rows) || []).length };
+    buildSeg($("tabSeg"), TABS, "tab", tabCounts);
+    buildChips(all);
+    buildSeg($("sortSeg"), SORTS, "sort");
+    var sel = $("clientSel"); var names = {}; all.forEach(function (r) { if (r.client) names[r.client] = 1; });
+    var list = Object.keys(names).sort();
+    sel.textContent = "";
+    var o0 = el("option", null, "All clients"); o0.value = "all"; sel.appendChild(o0);
+    list.forEach(function (n) { var o = el("option", null, n); o.value = n; sel.appendChild(o); });
+    sel.value = list.indexOf(state.client) > -1 ? state.client : "all"; state.client = sel.value;
+    var asel = $("assigneeSel"), who = {}; all.forEach(function (r) { people(r.assignee).forEach(function (n) { who[n] = 1; }); });
+    var wl = Object.keys(who).sort();
+    asel.textContent = "";
+    var a0 = el("option", null, "All assignees"); a0.value = "all"; asel.appendChild(a0);
+    wl.forEach(function (n) { var o = el("option", null, n); o.value = n; asel.appendChild(o); });
+    asel.value = wl.indexOf(state.assignee) > -1 ? state.assignee : "all"; state.assignee = asel.value;
+    renderTable(filtered(report));
+  }
+
+  function etNow() {
+    var o = {}; new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date()).forEach(function (p) { o[p.type] = p.value; });
+    return { date: o.year + "-" + o.month + "-" + o.day, mins: (+o.hour) * 60 + (+o.minute) };
+  }
+  function checkFresh() {
+    var n = $("notice");
+    if (!state.loaded || !state.reports.length) { n.hidden = true; return; }
+    var latest = state.reports[0], now = etNow();
+    var gap = Math.round((Date.parse(now.date + "T00:00:00Z") - Date.parse(latest.date + "T00:00:00Z")) / DAY);
+    var stale = gap >= 2 || (gap === 1 && now.mins >= 10 * 60 + 20);
+    n.hidden = !stale;
+    if (stale) $("noticeTxt").textContent = "Today's report hasn't arrived yet. You are looking at " + (latest.pillLabel ? "the backfill" : "the report for " + latest.date) + ", updated " + (latest.generatedAt ? dayLabel(latest.generatedAt) + " at " + timeLabel(latest.generatedAt) : "earlier") + ". Digests normally land around 9:45 AM ET.";
+  }
+  setInterval(checkFresh, 300000);
+
+  function ago(ms) {
+    var m = Math.max(0, Math.round((Date.now() - ms) / 60000));
+    if (m < 1) return "just now";
+    if (m < 60) return m + (m === 1 ? " minute ago" : " minutes ago");
+    var h = Math.round(m / 60); if (h < 24) return h + (h === 1 ? " hour ago" : " hours ago");
+    var d = Math.round(h / 24); return d + (d === 1 ? " day ago" : " days ago");
+  }
+  function updateStamp() {
+    var r = current(), st = $("stamp"), top = state.reports[0];
+    if (!r || !r.generatedAt) { st.hidden = true; if (top && top.generatedAt) $("liveTxt").textContent = "Last updated " + dayLabel(top.generatedAt) + ", " + timeLabel(top.generatedAt) + " ET · " + ago(top.generatedAt); return; }
+    st.hidden = false;
+    st.classList.toggle("old", Date.now() - r.generatedAt > 30 * 3600000);
+    var t = $("stampTxt"); t.textContent = "";
+    t.appendChild(document.createTextNode("Last updated "));
+    t.appendChild(el("b", null, dayLabel(r.generatedAt) + " at " + timeLabel(r.generatedAt) + " ET"));
+    t.appendChild(document.createTextNode(" · " + ago(r.generatedAt) + " · refreshes daily around 9:45 AM ET"));
+    if (top && top.generatedAt) $("liveTxt").textContent = "Last updated " + dayLabel(top.generatedAt) + ", " + timeLabel(top.generatedAt) + " ET · " + ago(top.generatedAt);
+  }
+  setInterval(updateStamp, 60000);
+
+  function renderAll() {
+    checkFresh(); updateStamp();
+    var report = current();
+    renderDays();
+    $("days").hidden = state.tab === "all";
+    if (report) {
+      $("eyebrow").textContent = report.label || "ClickUp · Daily digest";
+      $("sub").textContent = "From " + dayLabel(report.windowStart) + ", " + timeLabel(report.windowStart) + " to " + dayLabel(report.windowEnd) + ", " + timeLabel(report.windowEnd) + ". Tasks closed, sent for approval or added in that window; Mondays start from Friday 10:00 AM.";
+      var gt = state.tab === "all" && state.snap && state.snap.generatedAt ? state.snap.generatedAt : report.generatedAt;
+      $("gen").textContent = gt ? "Updated " + dayLabel(gt) + " at " + timeLabel(gt) : "";
+      renderTiles(report);
+    } else {
+      $("tiles").textContent = "";
+    }
+    renderBody();
+  }
+
+  $("q").addEventListener("input", function (e) { state.q = e.target.value; renderBody(); });
+  $("clientSel").addEventListener("change", function (e) { state.client = e.target.value; renderBody(); });
+  $("assigneeSel").addEventListener("change", function (e) { state.assignee = e.target.value; renderBody(); });
+  window.addEventListener("resize", function () { placeThumb($("tabSeg")); placeThumb($("statusSeg")); placeThumb($("sortSeg")); });
+
+  /* Pointer motion: tilt, spotlight, magnetism, aurora, scroll */
+  (function () {
+    var root = document.documentElement, hero = $("hero"), bar = $("bar");
+    var words = $("h1").textContent.split(" ");
+    $("h1").textContent = "";
+    words.forEach(function (w, k) { var sp = el("span", "w", w); sp.style.setProperty("--k", k); $("h1").appendChild(sp); if (k < words.length - 1) $("h1").appendChild(document.createTextNode(" ")); });
+    var fine = window.matchMedia && matchMedia("(hover: hover) and (pointer: fine)").matches && !reduce;
+    function onScroll() {
+      var y = window.scrollY || 0;
+      bar.classList.toggle("scrolled", y > 8);
+      if (!reduce) { var p = Math.min(1, y / 320); hero.style.opacity = String(1 - p * 0.7); hero.style.transform = "translateY(" + (-p * 28) + "px) scale(" + (1 - p * 0.04) + ")"; }
+    }
+    window.addEventListener("scroll", onScroll, { passive: true }); onScroll();
+    if (!fine) return;
+    root.classList.add("fine");
+    var tx = 0, ty = 0, cx = 0, cy = 0, run = false;
+    function loop() {
+      cx += (tx - cx) * 0.14; cy += (ty - cy) * 0.14;
+      root.style.setProperty("--cx", cx.toFixed(1) + "px"); root.style.setProperty("--cy", cy.toFixed(1) + "px");
+      if (Math.abs(tx - cx) > 0.4 || Math.abs(ty - cy) > 0.4) requestAnimationFrame(loop); else run = false;
+    }
+    function reset(t) { t.style.removeProperty("--rx"); t.style.removeProperty("--ry"); t.style.removeProperty("--mx"); t.style.removeProperty("--my"); t.classList.remove("hot"); }
+    document.addEventListener("pointermove", function (e) {
+      tx = e.clientX; ty = e.clientY; if (!run) { run = true; requestAnimationFrame(loop); }
+      root.style.setProperty("--ax", ((e.clientX / innerWidth) * 2 - 1).toFixed(3)); root.style.setProperty("--ay", ((e.clientY / innerHeight) * 2 - 1).toFixed(3));
+      var t = e.target.closest ? e.target.closest(".tile") : null;
+      if (t) {
+        var r = t.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+        t.style.setProperty("--px", x + "px"); t.style.setProperty("--py", y + "px");
+        t.style.setProperty("--rx", ((0.5 - y / r.height) * 9).toFixed(2) + "deg"); t.style.setProperty("--ry", ((x / r.width - 0.5) * 11).toFixed(2) + "deg");
+        t.classList.add("hot");
+      }
+      var tr = e.target.closest ? e.target.closest("tbody tr, .gh") : null;
+      if (tr) { var rr = tr.getBoundingClientRect(); tr.style.setProperty("--px", (e.clientX - rr.left) + "px"); tr.style.setProperty("--py", (e.clientY - rr.top) + "px"); }
+      var m = e.target.closest ? e.target.closest(".day, .seg button") : null;
+      if (m) { var mr = m.getBoundingClientRect(); m.style.setProperty("--mx", ((e.clientX - (mr.left + mr.width / 2)) * 0.18).toFixed(1) + "px"); m.style.setProperty("--my", ((e.clientY - (mr.top + mr.height / 2)) * 0.3).toFixed(1) + "px"); }
+    }, { passive: true });
+    document.addEventListener("pointerout", function (e) {
+      var t = e.target.closest ? e.target.closest(".tile, .day, .seg button") : null;
+      if (t && !t.contains(e.relatedTarget)) reset(t);
+    });
+  })();
+
+  renderAll();
+
+  (async function () {
+    var db = null;
+    try { db = await window.claude.use("db"); } catch (e) { db = null; }
+    if (!db) { state.loaded = true; $("liveTxt").textContent = "Sign in to see reports"; renderAll(); return; }
+    db.collection("reports").orderBy("date", "desc").limit(14).onSnapshot(function (snap) {
+      state.reports = snap.docs.map(function (d) { return d.data(); });
+      state.loaded = true;
+      if (!state.date || !state.reports.some(function (r) { return r.date === state.date; })) state.date = state.reports.length ? state.reports[0].date : null;
+      renderAll();
+    }, function () { state.loaded = true; renderAll(); });
+  })();
+})();
+</script>
