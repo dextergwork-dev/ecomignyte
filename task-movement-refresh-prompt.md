@@ -12,7 +12,7 @@ Prompt:
 ```
 Daily 8:30 AM ET refresh of the Task Movement artifact (https://claude.ai/artifact/TtCAb3fYHL1Ut1DFGyZHdt). Do not republish the page; only write data with ArtifactData (load it first with ToolSearch query "select:ArtifactData").
 
-Window: now = current time; windowStart = now minus 24 hours (epoch ms); report date = today's date in America/New_York (YYYY-MM-DD). Times are epoch ms.
+REPORT WINDOW (America/New_York clock times, converted to epoch ms): windowEnd = today at 8:00 AM ET. windowStart = 10:00 AM ET on the previous working day: on a Monday it is the Friday before at 10:00 AM; on every other day it is yesterday at 10:00 AM. Report date = today's date in America/New_York (YYYY-MM-DD). A task is in the window when its timestamp is >= windowStart and <= windowEnd.
 
 A) MOVED rows (field `rows`): tasks closed or sent for approval in the window.
 1. clickup_filter_tasks workspace-wide (the Client View list is a linked view of One-off Tasks; do not restrict to list 1400360000003043) with statuses ["Closed","done - approval"], include_closed true, order_by "updated", paging with next_page while has_more until date_updated is older than windowStart. Do not use date_closed_from or due_date filters (they drop tasks). Keep Closed tasks whose date_closed >= windowStart, and done - approval tasks whose date_updated >= windowStart. ts = date_closed when present, else date_updated.
@@ -27,7 +27,7 @@ D) For each moved row that is a Subtask fetch the parent's name; if the parent a
 
 E) Do not guess `closedBy`. ClickUp does not report who changed a status.
 
-F) Write ONE document: ArtifactData set on collection "reports", doc_id = report date (read first and pass if_version if it exists). Fields: date, label "Daily report · <Weekday Mon D>", windowStart, windowEnd, generatedAt, rows: [{client, type ("Main"/"Subtask"), parent, task, url, assignee, status ("Closed" or "Done - Approval"), ts, created, creator, urgent?}], createdGroups: [...].
+F) Write ONE document: ArtifactData set on collection "reports", doc_id = report date (read first and pass if_version if it exists). Fields: date, label "Daily report · <Weekday Mon D>", windowStart and windowEnd (the window above, not the current time), generatedAt (now), rows: [{client, type ("Main"/"Subtask"), parent, task, url, assignee, status ("Closed" or "Done - Approval"), ts, created, creator, urgent?}], createdGroups: [...].
 
 G) Retry any failing call up to 3 times. After writing, read the document back and confirm the counts. If a step cannot finish, write the partial report anyway and say what is missing.
 

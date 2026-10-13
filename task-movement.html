@@ -332,7 +332,7 @@ h1 .w { display: inline-block; animation: rise 0.8s var(--ease) backwards; anima
   <header class="hero" id="hero">
     <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
     <div class="eyebrow" id="eyebrow">ClickUp · Client View</div>
-    <h1 id="h1">What moved in the last 24 hours</h1>
+    <h1 id="h1">What moved since the last cutoff</h1>
     <div class="stamp" id="stamp" hidden><span class="pulse"></span><span id="stampTxt"></span></div>
     <p class="sub" id="sub">Tasks closed or sent for approval across every client, refreshed each morning.</p>
   </header>
@@ -697,7 +697,7 @@ h1 .w { display: inline-block; animation: rise 0.8s var(--ease) backwards; anima
     renderDays();
     if (report) {
       $("eyebrow").textContent = report.label || "ClickUp · Client View";
-      $("sub").textContent = "From " + dayLabel(report.windowStart) + ", " + timeLabel(report.windowStart) + " to " + dayLabel(report.windowEnd) + ", " + timeLabel(report.windowEnd) + ". Tasks closed, sent for approval or created across every client.";
+      $("sub").textContent = "From " + dayLabel(report.windowStart) + ", " + timeLabel(report.windowStart) + " to " + dayLabel(report.windowEnd) + ", " + timeLabel(report.windowEnd) + ". Each report runs from 10:00 AM the previous working day (Friday on Mondays) to 8:00 AM.";
       $("gen").textContent = report.generatedAt ? "Updated " + dayLabel(report.generatedAt) + " at " + timeLabel(report.generatedAt) : "";
       renderTiles(report);
     } else {
