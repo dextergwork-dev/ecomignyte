@@ -208,6 +208,12 @@ tbody tr:last-child td { border-bottom: 0; }
 .pill.progress { background: var(--info-soft); color: var(--info); }
 .pill.qc { background: rgba(191, 90, 242, 0.16); color: #bf5af2; }
 .pill.hold { background: rgba(255, 69, 58, 0.14); color: #ff453a; }
+.stsel { appearance: none; -webkit-appearance: none; border: 0; cursor: pointer; font: inherit; font-size: 12px; font-weight: 600; padding: 4px 22px 4px 10px; border-radius: 999px; max-width: 100%; background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%); background-position: calc(100% - 12px) 55%, calc(100% - 8px) 55%; background-size: 4px 4px; background-repeat: no-repeat; transition: transform 0.3s var(--ease), opacity 0.2s; }
+.stsel:hover { transform: translateY(-1px); }
+.stsel:disabled { opacity: 0.55; cursor: progress; }
+.stsel option { color: initial; background: initial; }
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); opacity: 0; pointer-events: none; background: var(--fg); color: var(--surface); padding: 10px 16px; border-radius: 12px; font-size: 13px; font-weight: 500; max-width: calc(100vw - 32px); transition: opacity 0.3s, transform 0.4s var(--ease); z-index: 50; }
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; flex-basis: 100%; order: 5; }
 .chips button { border: 0; cursor: pointer; font-size: 13px; font-weight: 500; padding: 6px 12px; border-radius: 999px; background: var(--mute-soft); color: var(--fg-2); white-space: nowrap; transition: background 0.25s, color 0.25s, transform 0.3s var(--ease); }
 .chips button:hover { transform: translateY(-1px); }
@@ -364,6 +370,7 @@ h1 .w { display: inline-block; animation: rise 0.8s var(--ease) backwards; anima
   </div>
 
   <div class="card"><div class="scroll" id="tableHost"></div></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <div class="foot"><span id="gen"></span><span>Source: ClickUp · times in Eastern</span></div>
 </div>
 
@@ -375,11 +382,12 @@ h1 .w { display: inline-block; animation: rise 0.8s var(--ease) backwards; anima
   var DAY = 86400000;
   var TABS = [["moved", "Closed or approved"], ["created", "Created"], ["all", "All tasks"]];
   var ORDER = ["to do", "in progress", "qc review", "qc feedback", "revisions needed", "on hold", "ready to launch", "recurring", "on going", "done - approval", "closed"];
-  var state = { reports: [], date: null, tab: "moved", q: "", statuses: {}, snap: null, client: "all", assignee: "all", sort: "client", loaded: false, open: {} };
+  var state = { reports: [], date: null, tab: "moved", q: "", statuses: {}, snap: null, mcp: null, over: {}, client: "all", assignee: "all", sort: "client", loaded: false, open: {} };
   function people(str) { return String(str || "").split(/,\s*/).filter(Boolean); }
   function hasPerson(x) { return state.assignee === "all" || people(x.assignee).indexOf(state.assignee) > -1; }
   function isOpen(gp) { return state.open[gp.url] !== undefined ? state.open[gp.url] : state.assignee !== "all"; }
-  function skey(r) { return String(r.status || "").toLowerCase(); }
+  function eff(r) { return (r.url && state.over[r.url]) || r.status; }
+  function skey(r) { return String(eff(r) || "").toLowerCase(); }
   function statusOk(r) { var k = Object.keys(state.statuses); return !k.length || !!state.statuses[skey(r)]; }
   function listFor(report) { if (state.tab === "all") return (state.snap && state.snap.rows) || []; return report ? (state.tab === "created" ? (report.createdGroups || []) : (report.rows || [])) : []; }
   function flat(groups) { var a = []; groups.forEach(function (gp) { a.push(gp); (gp.subtasks || []).forEach(function (x) { a.push(x); }); }); return a; }
@@ -551,7 +559,7 @@ h1 .w { display: inline-block; animation: rise 0.8s var(--ease) backwards; anima
       c2.appendChild(line);
       if (r.parent && r.parent !== "None") c2.appendChild(el("div", "parent", "Under " + r.parent));
       var c3 = el("td", "who", r.assignee || "Unassigned"); c3.setAttribute("data-l", "Assignee");
-      var c4 = el("td"); c4.setAttribute("data-l", "Status"); c4.appendChild(el("span", "pill " + kind(r.status), pretty(r.status)));
+      var c4 = el("td"); c4.setAttribute("data-l", "Status"); c4.appendChild(statusCell(r));
       var c5 = el("td", "when"); c5.setAttribute("data-l", isAll ? "Due date" : "Created");
       if (isAll) {
         if (r.due) { var dc = dueCell(r.due, Date.now()); c5.appendChild(dc); } else c5.appendChild(el("span", "dim", "No due date"));
@@ -575,6 +583,41 @@ h1 .w { display: inline-block; animation: rise 0.8s var(--ease) backwards; anima
       body.appendChild(tr);
     });
     table.appendChild(body); host.appendChild(table);
+  }
+
+  var toastT = 0;
+  function toast(msg) { var t = $("toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove("on"); }, 4200); }
+  function taskId(url) { var m = /\/t\/([^/?#]+)/.exec(url || ""); return m ? m[1] : null; }
+  function statusOptions(cur) {
+    var seen = {}, out = [];
+    var add = function (v) { var k = String(v || "").toLowerCase(); if (k && !seen[k]) { seen[k] = 1; out.push(pretty(v)); } };
+    add(cur);
+    ((state.snap && state.snap.rows) || []).forEach(function (r) { add(r.status); });
+    ORDER.forEach(add);
+    return out;
+  }
+  function failMsg(e) {
+    var c = e && e.code;
+    if (c === "needs_reauth" || c === "server_not_connected" || c === "selection_required") return "ClickUp isn't connected. Connect it in claude.ai Settings → Connectors, then reload.";
+    if (c === "not_in_manifest" || c === "consent_required" || c === "approval_required") return "You didn't allow this page to edit ClickUp.";
+    if (c === "tool_error") return "ClickUp refused that status: " + (e.message || "not valid for this task's list").slice(0, 120);
+    return "Couldn't reach ClickUp. Nothing was changed; try again.";
+  }
+  function statusCell(r) {
+    var cur = eff(r), id = taskId(r.url);
+    if (!state.mcp || !id) return el("span", "pill " + kind(cur), pretty(cur));
+    var sel = el("select", "stsel pill " + kind(cur)); sel.setAttribute("aria-label", "Change status in ClickUp");
+    statusOptions(cur).forEach(function (o) { var op = el("option", null, o); op.value = o; if (o.toLowerCase() === String(cur).toLowerCase()) op.selected = true; sel.appendChild(op); });
+    sel.addEventListener("change", function () {
+      var next = sel.value, prev = cur;
+      sel.disabled = true;
+      state.mcp.callTool("ClickUp", "clickup_update_task", { task_id: id, status: next }).then(function () {
+        state.over[r.url] = next; toast("Moved to " + next + " in ClickUp"); renderBody();
+      }, function (e) {
+        sel.disabled = false; sel.value = pretty(prev); toast(failMsg(e));
+      });
+    });
+    return sel;
   }
 
   var SVGNS = "http://www.w3.org/2000/svg";
@@ -794,6 +837,7 @@ h1 .w { display: inline-block; animation: rise 0.8s var(--ease) backwards; anima
   renderAll();
 
   (async function () {
+    try { state.mcp = await window.claude.use("mcp"); if (state.mcp) renderBody(); } catch (e) { state.mcp = null; }
     var db = null;
     try { db = await window.claude.use("db"); } catch (e) { db = null; }
     if (!db) { state.loaded = true; $("liveTxt").textContent = "Sign in to see reports"; renderAll(); return; }
